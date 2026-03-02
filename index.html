@@ -3,118 +3,110 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Realm Forge — Hex Map Generator</title>
+  <title>Realm Forge — Civ5 Style Map</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --bg:#1a1f2e;--panel:#22293a;--panel2:#2a3347;--border:#3a4560;
-      --text:#d4c8a0;--text-soft:#8a9ab8;--text-muted:#4a5570;
-      --accent:#e8b84b;--accent2:#6ab04c;--btn:#3a5090;--btn-hover:#4a60a8;
-      --shadow:rgba(0,0,0,0.5);
+      --bg:#0d1117;--panel:#161b27;--panel2:#1e2535;--border:#2a3550;
+      --text:#c8bfa0;--text-soft:#7a8aaa;--text-muted:#3a4560;
+      --accent:#e8c84a;--red:#e85545;--blue:#4a90d8;
+      --shadow:rgba(0,0,0,0.6);
     }
-    body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;}
-    .app{display:grid;grid-template-columns:260px 1fr;grid-template-rows:48px 1fr;height:100vh;}
+    html,body{height:100%;overflow:hidden;}
+    body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);}
+    .app{display:grid;grid-template-columns:270px 1fr;grid-template-rows:46px 1fr;height:100vh;}
 
-    /* Top bar */
-    .topbar{grid-column:1/-1;background:#111827;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:16px;z-index:100;}
-    .topbar-title{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--accent);letter-spacing:0.06em;}
-    .topbar-subtitle{font-size:0.72rem;color:var(--text-soft);letter-spacing:0.08em;}
+    /* Topbar */
+    .topbar{grid-column:1/-1;background:#0a0e18;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:14px;z-index:100;}
+    .logo{font-family:'Cinzel',serif;font-size:1.05rem;font-weight:700;color:var(--accent);letter-spacing:0.07em;}
+    .logo-sub{font-size:0.68rem;color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;}
     .topbar-spacer{flex:1;}
-    .topbar-seed{font-size:0.72rem;color:var(--text-muted);font-family:monospace;}
+    .seed-badge{font-size:0.68rem;color:var(--text-muted);font-family:monospace;background:var(--panel2);padding:3px 8px;border-radius:3px;border:1px solid var(--border);}
 
     /* Side panel */
-    .sidepanel{background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px;}
-    .section-title{font-family:'Cinzel',serif;font-size:0.68rem;font-weight:600;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;padding-bottom:5px;border-bottom:1px solid var(--border);}
-    .control-group{display:flex;flex-direction:column;gap:3px;}
-    .control-label{font-size:0.68rem;color:var(--text-soft);letter-spacing:0.06em;text-transform:uppercase;}
-    select{width:100%;padding:6px 8px;font-family:'Open Sans',sans-serif;font-size:0.82rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:3px;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a9ab8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;}
+    .sidepanel{background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;padding:10px 10px;display:flex;flex-direction:column;gap:9px;}
+    .sec-title{font-family:'Cinzel',serif;font-size:0.65rem;font-weight:600;color:var(--accent);letter-spacing:0.14em;text-transform:uppercase;padding-bottom:4px;border-bottom:1px solid var(--border);}
+    .ctrl{display:flex;flex-direction:column;gap:2px;}
+    .ctrl-lbl{font-size:0.64rem;color:var(--text-soft);letter-spacing:0.07em;text-transform:uppercase;}
+    select{width:100%;padding:5px 24px 5px 7px;font-family:'Open Sans',sans-serif;font-size:0.8rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:3px;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237a8aaa'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;}
     select:focus{border-color:var(--accent);}
-    select option{background:#22293a;}
+    select option{background:#1e2535;}
     .seed-row{display:flex;gap:4px;}
-    .seed-input{flex:1;padding:6px 8px;font-family:monospace;font-size:0.82rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:3px;outline:none;}
-    .seed-input:focus{border-color:var(--accent);}
-    .icon-btn{padding:6px 9px;background:var(--panel2);border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:0.85rem;color:var(--text-soft);transition:all 0.15s;}
-    .icon-btn:hover{background:var(--btn);color:var(--text);}
-    .forge-btn{width:100%;padding:11px;background:var(--btn);color:var(--accent);border:1px solid var(--accent);border-radius:4px;font-family:'Cinzel',serif;font-size:0.88rem;font-weight:600;letter-spacing:0.08em;cursor:pointer;transition:all 0.15s;text-transform:uppercase;}
-    .forge-btn:hover{background:var(--btn-hover);}
-    .forge-btn:active{transform:scale(0.98);}
-    .export-btn{width:100%;padding:7px;background:transparent;color:var(--text-soft);border:1px solid var(--border);border-radius:4px;font-family:'Open Sans',sans-serif;font-size:0.75rem;cursor:pointer;transition:all 0.15s;}
-    .export-btn:hover{background:var(--panel2);color:var(--text);}
+    .seed-in{flex:1;padding:5px 7px;font-family:monospace;font-size:0.8rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:3px;outline:none;}
+    .seed-in:focus{border-color:var(--accent);}
+    .rng-btn{padding:5px 8px;background:var(--panel2);border:1px solid var(--border);border-radius:3px;cursor:pointer;color:var(--text-soft);transition:all 0.15s;}
+    .rng-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .forge-btn{width:100%;padding:10px;background:linear-gradient(180deg,#3a5a9a,#2a4280);color:var(--accent);border:1px solid #4a6aaa;border-radius:4px;font-family:'Cinzel',serif;font-size:0.85rem;font-weight:600;letter-spacing:0.09em;cursor:pointer;transition:all 0.15s;text-transform:uppercase;box-shadow:0 2px 8px rgba(0,0,0,0.4);}
+    .forge-btn:hover{background:linear-gradient(180deg,#4a6aaa,#3a5290);}
+    .forge-btn:disabled{opacity:0.5;cursor:not-allowed;}
+    .save-btn{width:100%;padding:6px;background:transparent;color:var(--text-soft);border:1px solid var(--border);border-radius:3px;font-size:0.72rem;cursor:pointer;transition:all 0.15s;}
+    .save-btn:hover{background:var(--panel2);color:var(--text);}
     .divider{border:none;border-top:1px solid var(--border);}
-    .town-list{max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
-    .town-item{display:flex;align-items:center;gap:5px;}
-    .town-dot{width:8px;height:8px;background:var(--accent);flex-shrink:0;border-radius:50%;}
-    .town-dot.city{border-radius:0;background:#e85555;}
-    .town-item input{flex:1;padding:3px 6px;font-family:'Open Sans',sans-serif;font-size:0.8rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:2px;outline:none;}
+    .legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 6px;}
+    .leg-item{display:flex;align-items:center;gap:4px;font-size:0.67rem;color:var(--text-soft);}
+    .leg-sw{width:12px;height:10px;border-radius:2px;flex-shrink:0;}
+    .town-list{max-height:130px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+    .town-item{display:flex;align-items:center;gap:4px;}
+    .town-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+    .town-dot.city{border-radius:0;background:var(--red);}
+    .town-item input{flex:1;padding:3px 5px;font-size:0.76rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:2px;outline:none;}
     .town-item input:focus{border-color:var(--accent);}
 
-    /* Legend */
-    .legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
-    .legend-item{display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--text-soft);}
-    .legend-swatch{width:14px;height:12px;border-radius:2px;flex-shrink:0;border:1px solid rgba(255,255,255,0.1);}
+    /* Map */
+    .map-area{position:relative;overflow:hidden;background:#0a1520;cursor:grab;}
+    .map-area.dragging{cursor:grabbing;}
+    #mapCanvas{position:absolute;top:0;left:0;image-rendering:pixelated;}
 
-    /* Map area */
-    .map-area{position:relative;overflow:hidden;background:#0d1117;cursor:grab;}
-    .map-area:active{cursor:grabbing;}
-    #mapCanvas{position:absolute;top:0;left:0;}
-
-    /* Map toolbar overlay */
-    .map-toolbar{position:absolute;bottom:16px;right:16px;z-index:50;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
-    .zoom-group{display:flex;gap:4px;background:rgba(17,24,39,0.85);border:1px solid var(--border);border-radius:4px;padding:4px;}
-    .zoom-btn{padding:5px 10px;background:transparent;border:none;color:var(--text-soft);font-size:1rem;cursor:pointer;border-radius:3px;transition:all 0.15s;font-weight:600;}
-    .zoom-btn:hover{background:var(--panel2);color:var(--accent);}
-    .zoom-label{font-size:0.72rem;color:var(--text-muted);padding:5px 6px;font-family:monospace;}
-
-    /* Empty state */
-    .map-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);text-align:center;gap:12px;pointer-events:none;}
-    .map-empty-icon{font-size:4rem;opacity:0.3;}
-    .map-empty-text{font-family:'Cinzel',serif;font-size:1.1rem;letter-spacing:0.06em;opacity:0.5;}
-    .map-empty-sub{font-size:0.82rem;opacity:0.3;}
-
-    /* Rename tooltip */
-    .rename-tooltip{position:absolute;z-index:200;background:var(--panel);border:1px solid var(--accent);border-radius:4px;padding:8px;box-shadow:0 4px 16px var(--shadow);display:none;flex-direction:column;gap:5px;min-width:160px;}
-    .rename-tooltip input{padding:5px 7px;font-family:'Open Sans',sans-serif;font-size:0.85rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:2px;outline:none;width:100%;}
-    .rename-tooltip input:focus{border-color:var(--accent);}
-    .rename-btns{display:flex;gap:4px;}
-    .rename-ok{flex:1;padding:4px;background:var(--btn);color:var(--accent);border:1px solid var(--accent);border-radius:2px;font-size:0.72rem;cursor:pointer;}
-    .rename-cancel{flex:1;padding:4px;background:var(--panel2);color:var(--text-soft);border:1px solid var(--border);border-radius:2px;font-size:0.72rem;cursor:pointer;}
+    /* Zoom controls */
+    .zoom-ctrl{position:absolute;bottom:14px;right:14px;z-index:50;background:rgba(10,14,24,0.88);border:1px solid var(--border);border-radius:5px;display:flex;align-items:center;gap:2px;padding:3px;}
+    .z-btn{padding:4px 10px;background:none;border:none;color:var(--text-soft);font-size:1.1rem;cursor:pointer;border-radius:3px;transition:all 0.12s;line-height:1;}
+    .z-btn:hover{background:var(--panel2);color:var(--accent);}
+    .z-lbl{font-size:0.68rem;color:var(--text-muted);padding:0 5px;font-family:monospace;min-width:38px;text-align:center;}
 
     /* Map title */
-    .map-title-bar{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(17,24,39,0.82);border:1px solid var(--border);border-radius:4px;padding:5px 18px;pointer-events:none;}
-    .map-title-text{font-family:'Cinzel',serif;font-size:0.95rem;font-weight:600;color:var(--accent);letter-spacing:0.08em;}
+    .map-name{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(10,14,24,0.85);border:1px solid var(--border);border-radius:4px;padding:4px 16px;pointer-events:none;white-space:nowrap;}
+    .map-name-text{font-family:'Cinzel',serif;font-size:0.88rem;font-weight:600;color:var(--accent);letter-spacing:0.08em;}
 
-    ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--panel);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-    @media(max-width:640px){.app{grid-template-columns:1fr;grid-template-rows:48px auto 1fr;}.sidepanel{max-height:40vh;}}
+    /* Empty */
+    .map-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none;}
+    .map-empty-icon{font-size:3.5rem;opacity:0.2;}
+    .map-empty-txt{font-family:'Cinzel',serif;font-size:1rem;color:var(--text-muted);letter-spacing:0.06em;}
+    .map-empty-sub{font-size:0.78rem;color:var(--text-muted);opacity:0.5;}
+
+    /* Rename popup */
+    .rename-pop{position:absolute;z-index:200;background:var(--panel);border:1px solid var(--accent);border-radius:4px;padding:7px;box-shadow:0 4px 20px var(--shadow);display:none;flex-direction:column;gap:4px;min-width:155px;}
+    .rename-pop input{padding:4px 6px;font-size:0.82rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:2px;outline:none;width:100%;}
+    .rename-pop input:focus{border-color:var(--accent);}
+    .rename-row{display:flex;gap:4px;}
+    .rok{flex:1;padding:3px;background:var(--blue);color:#fff;border:none;border-radius:2px;font-size:0.68rem;cursor:pointer;}
+    .rcancel{flex:1;padding:3px;background:var(--panel2);color:var(--text-soft);border:1px solid var(--border);border-radius:2px;font-size:0.68rem;cursor:pointer;}
+
+    ::-webkit-scrollbar{width:4px;}
+    ::-webkit-scrollbar-track{background:var(--panel);}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
   </style>
 </head>
 <body>
 <div class="app">
-  <!-- Top bar -->
   <div class="topbar">
-    <div>
-      <div class="topbar-title">⚔ REALM FORGE</div>
-    </div>
-    <div class="topbar-subtitle">HEX MAP GENERATOR · TTRPG WORLD BUILDER</div>
+    <div><div class="logo">⚔ REALM FORGE</div></div>
+    <div class="logo-sub">Hex Map Generator · TTRPG World Builder</div>
     <div class="topbar-spacer"></div>
-    <div class="topbar-seed" id="topSeed"></div>
+    <div class="seed-badge" id="seedBadge">No map generated</div>
   </div>
 
-  <!-- Side panel -->
   <div class="sidepanel">
-    <div class="section-title">Map Parameters</div>
+    <div class="sec-title">Map Parameters</div>
 
-    <div class="control-group">
-      <div class="control-label">Map Size</div>
+    <div class="ctrl"><div class="ctrl-lbl">Map Size</div>
       <select id="mapSize">
-        <option value="small">Small (30×22)</option>
-        <option value="medium" selected>Medium (48×34)</option>
-        <option value="large">Large (64×46)</option>
-      </select>
-    </div>
+        <option value="small">Small (32×24)</option>
+        <option value="medium" selected>Medium (52×38)</option>
+        <option value="large">Large (72×52)</option>
+      </select></div>
 
-    <div class="control-group">
-      <div class="control-label">Land Shape</div>
+    <div class="ctrl"><div class="ctrl-lbl">Land Shape</div>
       <select id="landType">
         <option value="continent">Continent</option>
         <option value="island">Island</option>
@@ -125,27 +117,23 @@
         <option value="fjord">Fjord Coast</option>
         <option value="delta">River Delta</option>
         <option value="random">Random</option>
-      </select>
-    </div>
+      </select></div>
 
-    <div class="control-group">
-      <div class="control-label">Primary Terrain</div>
+    <div class="ctrl"><div class="ctrl-lbl">Primary Terrain</div>
       <select id="terrain">
         <option value="mixed">Mixed</option>
         <option value="forest">Forest</option>
         <option value="mountains">Mountains</option>
         <option value="desert">Desert</option>
         <option value="plains">Plains</option>
-        <option value="tundra">Tundra</option>
+        <option value="tundra">Tundra / Ice</option>
         <option value="swamp">Swamp</option>
         <option value="jungle">Jungle</option>
         <option value="savanna">Savanna</option>
         <option value="volcanic">Volcanic</option>
-      </select>
-    </div>
+      </select></div>
 
-    <div class="control-group">
-      <div class="control-label">Water Bodies</div>
+    <div class="ctrl"><div class="ctrl-lbl">Water Bodies</div>
       <select id="water">
         <option value="moderate">Moderate</option>
         <option value="abundant">Abundant</option>
@@ -153,363 +141,520 @@
         <option value="rivers">Rivers Only</option>
         <option value="lakes">Lakes Only</option>
         <option value="arid">Arid — Minimal</option>
-      </select>
-    </div>
+      </select></div>
 
-    <div class="control-group">
-      <div class="control-label">Settlements</div>
+    <div class="ctrl"><div class="ctrl-lbl">Settlements</div>
       <select id="settlements">
         <option value="none">None</option>
         <option value="few">Few</option>
         <option value="moderate" selected>Moderate</option>
         <option value="many">Many</option>
-      </select>
-    </div>
+      </select></div>
 
-    <div class="control-group">
-      <div class="control-label">Era / Age</div>
+    <div class="ctrl"><div class="ctrl-lbl">Era / Age</div>
       <select id="era">
         <option value="medieval">Medieval Fantasy</option>
         <option value="ancient">Ancient / Mythic</option>
         <option value="dark">Dark Ages</option>
         <option value="apocalyptic">Post-Apocalyptic</option>
         <option value="magitech">Magitech / Arcane</option>
-      </select>
-    </div>
+      </select></div>
 
-    <div class="control-group">
-      <div class="control-label">Map Seed</div>
+    <div class="ctrl"><div class="ctrl-lbl">Seed</div>
       <div class="seed-row">
-        <input type="text" class="seed-input" id="seedInput" placeholder="e.g. 42069"/>
-        <button class="icon-btn" id="randomSeedBtn">🎲</button>
-      </div>
-    </div>
+        <input class="seed-in" id="seedInput" placeholder="Random…"/>
+        <button class="rng-btn" id="rngBtn">🎲</button>
+      </div></div>
 
-    <button class="forge-btn" id="generateBtn">⚔ FORGE REALM</button>
-    <button class="export-btn" id="exportBtn">↓ Save as PNG</button>
-
-    <hr class="divider"/>
-
-    <div class="section-title">Legend</div>
-    <div class="legend-grid" id="legendGrid"></div>
+    <button class="forge-btn" id="forgeBtn">⚔ FORGE REALM</button>
+    <button class="save-btn" id="saveBtn">↓ Save PNG</button>
 
     <hr class="divider"/>
+    <div class="sec-title">Legend</div>
+    <div class="legend-grid" id="legendGrid"><div style="font-size:0.7rem;color:var(--text-muted)">Generate a map first</div></div>
 
-    <div class="section-title">Edit Settlements</div>
-    <div class="town-list" id="townList">
-      <div style="font-size:0.75rem;color:var(--text-muted);text-align:center;padding:6px;">Generate a map first</div>
-    </div>
+    <hr class="divider"/>
+    <div class="sec-title">Settlements</div>
+    <div class="town-list" id="townList"><div style="font-size:0.72rem;color:var(--text-muted);padding:4px;">Generate a map first</div></div>
   </div>
 
-  <!-- Map area -->
   <div class="map-area" id="mapArea">
     <canvas id="mapCanvas"></canvas>
     <div class="map-empty" id="mapEmpty">
       <div class="map-empty-icon">🗺</div>
-      <div class="map-empty-text">Your Realm Awaits</div>
+      <div class="map-empty-txt">Your Realm Awaits</div>
       <div class="map-empty-sub">Configure parameters and forge a world</div>
     </div>
-    <div class="map-title-bar" id="mapTitleBar" style="display:none">
-      <div class="map-title-text" id="mapTitleText"></div>
+    <div class="map-name" id="mapName" style="display:none">
+      <div class="map-name-text" id="mapNameText"></div>
     </div>
-    <div class="map-toolbar">
-      <div class="zoom-group">
-        <button class="zoom-btn" id="zoomIn">+</button>
-        <span class="zoom-label" id="zoomLabel">100%</span>
-        <button class="zoom-btn" id="zoomOut">−</button>
-        <button class="zoom-btn" id="zoomReset" style="font-size:0.7rem;padding:5px 7px;">⟳</button>
-      </div>
+    <div class="zoom-ctrl">
+      <button class="z-btn" id="zIn">+</button>
+      <span class="z-lbl" id="zLbl">100%</span>
+      <button class="z-btn" id="zOut">−</button>
+      <button class="z-btn" id="zRst" style="font-size:0.7rem;padding:4px 6px;">⟳</button>
     </div>
-    <div class="rename-tooltip" id="renameTooltip">
-      <input type="text" id="renameInput" placeholder="Settlement name…"/>
-      <div class="rename-btns">
-        <button class="rename-ok" id="renameOk">✓ OK</button>
-        <button class="rename-cancel" id="renameCancel">✕</button>
+    <div class="rename-pop" id="renamePop">
+      <input id="renameIn" placeholder="Settlement name…"/>
+      <div class="rename-row">
+        <button class="rok" id="renameOk">✓ OK</button>
+        <button class="rcancel" id="renameCancel">✕</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-// ── RNG ──────────────────────────────────────────────────────────────────────
-function createRNG(seed){let s=seed>>>0;return()=>{s+=0x6D2B79F5;let t=Math.imul(s^s>>>15,1|s);t^=t+Math.imul(t^t>>>7,61|t);return((t^t>>>14)>>>0)/4294967296;};}
+// ─── RNG & Noise ──────────────────────────────────────────────────────────────
+function rngOf(seed){let s=seed>>>0;return()=>{s+=0x6D2B79F5;let t=Math.imul(s^s>>>15,1|s);t^=t+Math.imul(t^t>>>7,61|t);return((t^t>>>14)>>>0)/4294967296;};}
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i)|0;return Math.abs(h);}
-
-// ── Noise ────────────────────────────────────────────────────────────────────
-function makeNoise(rng,w,h){
-  const g=[];for(let y=0;y<h;y++){g[y]=[];for(let x=0;x<w;x++)g[y][x]=rng();}
-  const lerp=(a,b,t)=>a+(b-a)*t,sm=t=>t*t*(3-2*t);
-  return(x,y)=>{const xi=Math.floor(x)%w,yi=Math.floor(y)%h,xf=x-Math.floor(x),yf=y-Math.floor(y),x1=(xi+1)%w,y1=(yi+1)%h;return lerp(lerp(g[yi][xi],g[yi][x1],sm(xf)),lerp(g[y1][xi],g[y1][x1],sm(xf)),sm(yf));};
-}
+function makeNoise(rng,w,h){const g=[];for(let y=0;y<h;y++){g[y]=[];for(let x=0;x<w;x++)g[y][x]=rng();}const sm=t=>t*t*(3-2*t),lerp=(a,b,t)=>a+(b-a)*t;return(x,y)=>{const xi=Math.floor(x)%w,yi=Math.floor(y)%h,xf=x-Math.floor(x),yf=y-Math.floor(y);return lerp(lerp(g[yi][xi],g[yi][(xi+1)%w],sm(xf)),lerp(g[(yi+1)%h][xi],g[(yi+1)%h][(xi+1)%w],sm(xf)),sm(yf));};}
 function fbm(n,x,y,o=5){let v=0,a=0.5,f=1,m=0;for(let i=0;i<o;i++){v+=n(x*f,y*f)*a;m+=a;a*=0.5;f*=2;}return v/m;}
 
-// ── Hex math ─────────────────────────────────────────────────────────────────
-// Flat-top hexagons like Civ 5
-function hexToPixel(col,row,size){
-  const x=size*1.5*col;
-  const y=size*Math.sqrt(3)*(row+(col%2)*0.5);
-  return{x,y};
+// ─── Hex Math ─────────────────────────────────────────────────────────────────
+const S3=Math.sqrt(3);
+function hexCenter(col,row,R){// flat-top
+  return{x:R*1.5*col+R, y:R*S3*(row+(col%2===0?0:0.5))+R*S3/2};
 }
-function hexCorner(cx,cy,size,i){
-  const deg=60*i;const rad=Math.PI/180*deg;
-  return{x:cx+size*Math.cos(rad),y:cy+size*Math.sin(rad)};
+function hexPath(cx,cy,R){
+  const pts=[];for(let i=0;i<6;i++){const a=Math.PI/180*(60*i);pts.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}
+  return pts;
 }
 
-// ── Tile types and colors ─────────────────────────────────────────────────────
-const TILE={
-  DEEP_OCEAN:  {fill:'#1a3a5c',stroke:'#1e4470',label:'Deep Ocean'},
-  OCEAN:       {fill:'#1e4d7a',stroke:'#235890',label:'Ocean'},
-  COAST:       {fill:'#2a6a9e',stroke:'#3080b8',label:'Coast'},
-  PLAINS:      {fill:'#8aae3a',stroke:'#9abe4a',label:'Plains'},
-  GRASSLAND:   {fill:'#4a8a2a',stroke:'#5a9e32',label:'Grassland'},
-  FOREST:      {fill:'#2a6a22',stroke:'#348028',label:'Forest'},
-  JUNGLE:      {fill:'#1a5a18',stroke:'#227020',label:'Jungle'},
-  HILLS:       {fill:'#a87a40',stroke:'#be8e50',label:'Hills'},
-  MOUNTAINS:   {fill:'#8a7a6a',stroke:'#9e8e7a',label:'Mountains'},
-  SNOW_PEAK:   {fill:'#d8d8e8',stroke:'#e8e8f0',label:'Snow Peak'},
-  DESERT:      {fill:'#d4b86a',stroke:'#e0c878',label:'Desert'},
-  TUNDRA:      {fill:'#8ab0a0',stroke:'#9ec0b0',label:'Tundra'},
-  SNOW:        {fill:'#c8d8d0',stroke:'#d8e8e0',label:'Snow'},
-  SWAMP:       {fill:'#3a5a30',stroke:'#4a6e3c',label:'Swamp'},
-  VOLCANIC:    {fill:'#5a2a18',stroke:'#6e3820',label:'Volcanic'},
-  LAVA:        {fill:'#c83010',stroke:'#e03820',label:'Lava'},
-  SAVANNA:     {fill:'#c8a03a',stroke:'#d8b048',label:'Savanna'},
-  RIVER:       {fill:'#2a7ab0',stroke:'#3090cc',label:'River'},
-  LAKE:        {fill:'#2060a0',stroke:'#2878b8',label:'Lake'},
+// ─── Tile Definitions ─────────────────────────────────────────────────────────
+// Each tile has a multi-stop gradient palette + optional feature drawing
+const T={
+  DEEP_OCEAN:   {id:'DEEP_OCEAN',   label:'Deep Ocean',    base:'#0d2a45', mid:'#0e3252', top:'#0f3a60'},
+  OCEAN:        {id:'OCEAN',        label:'Ocean',         base:'#1a4870', mid:'#1f5580', top:'#245f90'},
+  COAST:        {id:'COAST',        label:'Coast',         base:'#2a6a9a', mid:'#3478a8', top:'#4090c0'},
+  SHALLOW:      {id:'SHALLOW',      label:'Shallow Water', base:'#3a80b0', mid:'#4a90c0', top:'#60aad0'},
+  PLAINS:       {id:'PLAINS',       label:'Plains',        base:'#7aac2a', mid:'#88be35', top:'#9acc40'},
+  GRASSLAND:    {id:'GRASSLAND',    label:'Grassland',     base:'#3a7a1a', mid:'#458a22', top:'#50962a'},
+  FOREST:       {id:'FOREST',       label:'Forest',        base:'#1e5a12', mid:'#226618', top:'#287820'},
+  JUNGLE:       {id:'JUNGLE',       label:'Jungle',        base:'#145010', mid:'#185c14', top:'#1c6818'},
+  HILLS:        {id:'HILLS',        label:'Hills',         base:'#8c6830', mid:'#9e7838', top:'#b08a44'},
+  MOUNTAINS:    {id:'MOUNTAINS',    label:'Mountains',     base:'#6a5a48', mid:'#7a6a58', top:'#8a7a68'},
+  SNOW_PEAK:    {id:'SNOW_PEAK',    label:'Snow Peak',     base:'#c0c8d0', mid:'#d0dae0', top:'#e0eaf0'},
+  DESERT:       {id:'DESERT',       label:'Desert',        base:'#c8a83a', mid:'#d8bc50', top:'#e8cc60'},
+  TUNDRA:       {id:'TUNDRA',       label:'Tundra',        base:'#7a9890', mid:'#88aaa0', top:'#98bcb0'},
+  SNOW:         {id:'SNOW',         label:'Snow',          base:'#b8ccc8', mid:'#c8dcd8', top:'#d8ece8'},
+  SWAMP:        {id:'SWAMP',        label:'Swamp',         base:'#2a4820', mid:'#345430', top:'#3e6038'},
+  VOLCANIC:     {id:'VOLCANIC',     label:'Volcanic',      base:'#4a2010', mid:'#5e2a14', top:'#723418'},
+  LAVA:         {id:'LAVA',         label:'Lava',          base:'#c02808', mid:'#dc3c10', top:'#e85020'},
+  SAVANNA:      {id:'SAVANNA',      label:'Savanna',       base:'#b89030', mid:'#caa040', top:'#dab050'},
+  RIVER:        {id:'RIVER',        label:'River',         base:'#1e5888', mid:'#2868a0', top:'#3878b4'},
+  LAKE:         {id:'LAKE',         label:'Lake',          base:'#183e68', mid:'#1e4a7a', top:'#28588e'},
+  RUINS:        {id:'RUINS',        label:'Ruins',         base:'#382a1c', mid:'#4a3828', top:'#5a4634'},
+  CASTLE:       {id:'CASTLE',       label:'Castle',        base:'#2c2c3a', mid:'#3a3a4a', top:'#48485a'},
 };
 
-// ── Names ────────────────────────────────────────────────────────────────────
-const PRE=['Aether','Brim','Cael','Drak','Eld','Fae','Grim','Helm','Iron','Jade','Kael','Lorn','Mor','Neth','Orm','Pyre','Quel','Raven','Stone','Thorn','Val','Wych','Xan','Yor','Zeph','Ash','Black','Cold','Dawn','Frost','Gold','High','Mist','Night','Oak','Silver'];
-const SUF=['haven','moor','fell','reach','hold','gate','shire','mere','dun','heim','keep','vale','ford','mark','fen','spire','watch','crest','brook','dale','field','glen','grove','hill','marsh','peak','ridge','rock','stead','tor','wood'];
-const TOWNS=['Ashford','Brackwater','Coldmere','Dusthaven','Elderwick','Frostgate','Grimhold','Harrowfen','Ironspire','Jadekeep','Kaldrath','Lornswick','Mirefall','Nethgate','Oldwatch','Pyremont','Quelford','Ravenstone','Stonegate','Thornwick','Ulvenmoor','Valeford','Wychwood','Xandrel','Yorkstead','Zephyrhold','Embervale','Frostwick','Goldfen','Highkeep','Irondale','Jadewood','Keldmoor','Lorndell','Mirehaven','Netherford','Ashwick','Blackmere','Cresthold','Dustwick'];
-const RUINS=['Shattered Keep','Tomb of Aelvar','Drakmore Ruins','Sunken Temple','Shadow Cradle','Void Citadel','Forgotten Spire','Grim Necropolis','Broken Gate','Xan Obelisk'];
-const CASTLES=['Ironhold','Drakenmoor','High Aerie','Stormwatch','Embercrown','Thornwall','Voidstone','Goldspire','Nightwatch','Bleakwall'];
+// ─── Canvas drawing helpers ───────────────────────────────────────────────────
+function fillHex(cx,cy,R,color,ctx2){
+  const pts=hexPath(cx,cy,R);
+  ctx2.beginPath();ctx2.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<6;i++)ctx2.lineTo(pts[i][0],pts[i][1]);
+  ctx2.closePath();ctx2.fillStyle=color;ctx2.fill();
+}
 
-// ── State ─────────────────────────────────────────────────────────────────────
+function drawHexGradient(cx,cy,R,tile,ctx2){
+  const pts=hexPath(cx,cy,R);
+  ctx2.beginPath();ctx2.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<6;i++)ctx2.lineTo(pts[i][0],pts[i][1]);
+  ctx2.closePath();
+  // Radial gradient for depth
+  const grad=ctx2.createRadialGradient(cx-R*0.2,cy-R*0.2,R*0.1,cx,cy,R*1.1);
+  grad.addColorStop(0,lighten(tile.top,18));
+  grad.addColorStop(0.5,tile.mid);
+  grad.addColorStop(1,darken(tile.base,12));
+  ctx2.fillStyle=grad;ctx2.fill();
+  // Subtle border
+  ctx2.strokeStyle=darken(tile.base,20);ctx2.lineWidth=0.7;ctx2.stroke();
+}
+
+function lighten(hex,amt){return shiftColor(hex,amt);}
+function darken(hex,amt){return shiftColor(hex,-amt);}
+function shiftColor(hex,amt){
+  const n=parseInt(hex.replace('#',''),16);
+  const r=Math.min(255,Math.max(0,((n>>16)&255)+amt));
+  const g=Math.min(255,Math.max(0,((n>>8)&255)+amt));
+  const b=Math.min(255,Math.max(0,(n&255)+amt));
+  return`#${((r<<16)|(g<<8)|b).toString(16).padStart(6,'0')}`;
+}
+
+// ─── Feature icon drawers ─────────────────────────────────────────────────────
+function drawWater(cx,cy,R,ctx2,deep){
+  // Animated-look wave lines
+  const wc=deep?'rgba(255,255,255,0.07)':'rgba(255,255,255,0.12)';
+  ctx2.strokeStyle=wc;ctx2.lineWidth=0.8;
+  for(let i=-1;i<=1;i++){
+    ctx2.beginPath();
+    ctx2.moveTo(cx-R*0.55,cy+i*R*0.22);
+    ctx2.bezierCurveTo(cx-R*0.2,cy+i*R*0.22-R*0.08,cx+R*0.2,cy+i*R*0.22+R*0.08,cx+R*0.55,cy+i*R*0.22);
+    ctx2.stroke();
+  }
+  // Shimmer dot
+  ctx2.fillStyle='rgba(255,255,255,0.12)';
+  ctx2.beginPath();ctx2.arc(cx-R*0.2,cy-R*0.18,R*0.09,0,Math.PI*2);ctx2.fill();
+}
+
+function drawMountain(cx,cy,R,ctx2,snow){
+  const h=R*0.72,hw=R*0.68;
+  // Shadow side
+  ctx2.fillStyle='rgba(0,0,0,0.28)';
+  ctx2.beginPath();ctx2.moveTo(cx,cy-h);ctx2.lineTo(cx,cy+h*0.38);ctx2.lineTo(cx+hw,cy+h*0.38);ctx2.closePath();ctx2.fill();
+  // Light side
+  ctx2.fillStyle='rgba(255,255,255,0.18)';
+  ctx2.beginPath();ctx2.moveTo(cx,cy-h);ctx2.lineTo(cx,cy+h*0.38);ctx2.lineTo(cx-hw,cy+h*0.38);ctx2.closePath();ctx2.fill();
+  // Outline
+  ctx2.strokeStyle='rgba(0,0,0,0.35)';ctx2.lineWidth=0.8;
+  ctx2.beginPath();ctx2.moveTo(cx,cy-h);ctx2.lineTo(cx-hw,cy+h*0.38);ctx2.lineTo(cx+hw,cy+h*0.38);ctx2.closePath();ctx2.stroke();
+  if(snow){
+    ctx2.fillStyle='rgba(220,235,255,0.82)';
+    ctx2.beginPath();ctx2.moveTo(cx,cy-h);ctx2.lineTo(cx-hw*0.32,cy-h*0.3);ctx2.lineTo(cx+hw*0.32,cy-h*0.3);ctx2.closePath();ctx2.fill();
+    ctx2.strokeStyle='rgba(180,200,230,0.5)';ctx2.lineWidth=0.5;ctx2.stroke();
+  }
+}
+
+function drawHills(cx,cy,R,ctx2){
+  const drawHill=(ox,oy,w,h2)=>{
+    ctx2.fillStyle='rgba(255,255,255,0.14)';
+    ctx2.beginPath();ctx2.ellipse(cx+ox,cy+oy+h2*0.5,w,h2,0,Math.PI,0);ctx2.fill();
+    ctx2.fillStyle='rgba(0,0,0,0.22)';
+    ctx2.beginPath();ctx2.ellipse(cx+ox+w*0.15,cy+oy+h2*0.5,w*0.6,h2*0.7,0,Math.PI,0);ctx2.fill();
+    ctx2.strokeStyle='rgba(0,0,0,0.3)';ctx2.lineWidth=0.7;
+    ctx2.beginPath();ctx2.ellipse(cx+ox,cy+oy+h2*0.5,w,h2,0,Math.PI,0);ctx2.stroke();
+  };
+  drawHill(-R*0.22,R*0.05,R*0.38,R*0.3);
+  drawHill(R*0.18,R*0.08,R*0.32,R*0.25);
+}
+
+function drawTree(cx,cy,R,ctx2,type){
+  const drawConifer=(tx,ty,sz)=>{
+    ctx2.fillStyle='rgba(0,0,0,0.2)';
+    ctx2.beginPath();ctx2.moveTo(tx+sz*0.08,ty-sz*0.05);ctx2.lineTo(tx-sz*0.55+sz*0.08,ty+sz*0.65);ctx2.lineTo(tx+sz*0.55+sz*0.08,ty+sz*0.65);ctx2.closePath();ctx2.fill();
+    const treeColor=type==='jungle'?'#1a6018':type==='swamp'?'#2a5020':'#1e7018';
+    ctx2.fillStyle=treeColor;
+    ctx2.beginPath();ctx2.moveTo(tx,ty-sz*0.08);ctx2.lineTo(tx-sz*0.55,ty+sz*0.58);ctx2.lineTo(tx+sz*0.55,ty+sz*0.58);ctx2.closePath();ctx2.fill();
+    // Light face
+    ctx2.fillStyle='rgba(255,255,255,0.14)';
+    ctx2.beginPath();ctx2.moveTo(tx,ty-sz*0.08);ctx2.lineTo(tx-sz*0.12,ty+sz*0.28);ctx2.lineTo(tx+sz*0.55,ty+sz*0.58);ctx2.closePath();ctx2.fill();
+    ctx2.strokeStyle='rgba(0,0,0,0.28)';ctx2.lineWidth=0.5;
+    ctx2.beginPath();ctx2.moveTo(tx,ty-sz*0.08);ctx2.lineTo(tx-sz*0.55,ty+sz*0.58);ctx2.lineTo(tx+sz*0.55,ty+sz*0.58);ctx2.closePath();ctx2.stroke();
+  };
+  const drawPalm=(tx,ty,sz)=>{
+    // Trunk
+    ctx2.strokeStyle='#5a3a10';ctx2.lineWidth=sz*0.12;
+    ctx2.beginPath();ctx2.moveTo(tx,ty+sz*0.5);ctx2.bezierCurveTo(tx+sz*0.1,ty,tx-sz*0.05,ty-sz*0.3,tx,ty-sz*0.5);ctx2.stroke();
+    // Fronds
+    ctx2.strokeStyle='#1a7010';ctx2.lineWidth=sz*0.12;
+    for(let a=0;a<6;a++){const ang=-Math.PI/2+a*(Math.PI/3);ctx2.beginPath();ctx2.moveTo(tx,ty-sz*0.5);ctx2.lineTo(tx+Math.cos(ang)*sz*0.55,ty-sz*0.5+Math.sin(ang)*sz*0.42);ctx2.stroke();}
+  };
+  const sz=R*0.5;
+  if(type==='jungle'){
+    drawPalm(cx-R*0.14,cy+R*0.08,sz*0.88);
+    drawConifer(cx+R*0.2,cy,sz*0.62);
+  } else {
+    drawConifer(cx-R*0.15,cy+R*0.05,sz*0.85);
+    drawConifer(cx+R*0.22,cy+R*0.1,sz*0.68);
+  }
+}
+
+function drawDesert(cx,cy,R,ctx2){
+  // Sand dune lines
+  ctx2.strokeStyle='rgba(200,160,30,0.3)';ctx2.lineWidth=0.7;
+  for(let i=0;i<3;i++){
+    ctx2.beginPath();
+    ctx2.moveTo(cx-R*0.5+i*R*0.1,cy+i*R*0.15-R*0.1);
+    ctx2.bezierCurveTo(cx-R*0.1,cy+i*R*0.15-R*0.22,cx+R*0.1,cy+i*R*0.15+R*0.05,cx+R*0.5+i*R*0.05,cy+i*R*0.15-R*0.08);
+    ctx2.stroke();
+  }
+  // Sun shimmer
+  ctx2.fillStyle='rgba(255,220,80,0.14)';
+  ctx2.beginPath();ctx2.arc(cx+R*0.2,cy-R*0.25,R*0.16,0,Math.PI*2);ctx2.fill();
+}
+
+function drawTundra(cx,cy,R,ctx2,snow){
+  if(snow){
+    // Snow texture
+    ctx2.fillStyle='rgba(200,220,255,0.22)';
+    for(let i=0;i<5;i++){ctx2.beginPath();ctx2.arc(cx+(Math.random()-0.5)*R*0.9,cy+(Math.random()-0.5)*R*0.7,R*0.05,0,Math.PI*2);ctx2.fill();}
+  }
+  // Ice cracks
+  ctx2.strokeStyle='rgba(180,210,255,0.25)';ctx2.lineWidth=0.6;
+  ctx2.beginPath();ctx2.moveTo(cx-R*0.4,cy-R*0.1);ctx2.lineTo(cx,cy+R*0.2);ctx2.lineTo(cx+R*0.35,cy-R*0.15);ctx2.stroke();
+}
+
+function drawSwamp(cx,cy,R,ctx2){
+  // Water patches
+  ctx2.fillStyle='rgba(20,50,15,0.5)';
+  ctx2.beginPath();ctx2.ellipse(cx-R*0.2,cy+R*0.2,R*0.25,R*0.14,0.3,0,Math.PI*2);ctx2.fill();
+  ctx2.beginPath();ctx2.ellipse(cx+R*0.22,cy+R*0.1,R*0.2,R*0.12,-0.2,0,Math.PI*2);ctx2.fill();
+  // Reeds
+  ctx2.strokeStyle='#4a7030';ctx2.lineWidth=1;
+  for(let i=-1;i<=1;i++){ctx2.beginPath();ctx2.moveTo(cx+i*R*0.2,cy+R*0.28);ctx2.lineTo(cx+i*R*0.2-R*0.04,cy-R*0.12);ctx2.stroke();}
+}
+
+function drawVolcanic(cx,cy,R,ctx2,lava){
+  if(lava){
+    // Glowing lava pool
+    const g=ctx2.createRadialGradient(cx,cy,R*0.08,cx,cy,R*0.55);
+    g.addColorStop(0,'rgba(255,180,40,0.7)');
+    g.addColorStop(0.5,'rgba(220,60,10,0.55)');
+    g.addColorStop(1,'rgba(180,20,0,0.0)');
+    ctx2.fillStyle=g;ctx2.beginPath();ctx2.arc(cx,cy,R*0.55,0,Math.PI*2);ctx2.fill();
+    // Cracks
+    ctx2.strokeStyle='rgba(255,140,20,0.45)';ctx2.lineWidth=0.8;
+    for(let i=0;i<4;i++){const a=i*Math.PI/2+0.3;ctx2.beginPath();ctx2.moveTo(cx,cy);ctx2.lineTo(cx+Math.cos(a)*R*0.5,cy+Math.sin(a)*R*0.5);ctx2.stroke();}
+  } else {
+    // Ash texture
+    ctx2.fillStyle='rgba(60,30,10,0.35)';
+    for(let i=0;i<4;i++){ctx2.beginPath();ctx2.arc(cx+(Math.random()-0.5)*R*0.8,cy+(Math.random()-0.5)*R*0.7,R*0.07,0,Math.PI*2);ctx2.fill();}
+  }
+}
+
+function drawRuinsIcon(cx,cy,R,ctx2,name){
+  // Broken wall left
+  ctx2.fillStyle='rgba(160,130,90,0.55)';
+  ctx2.fillRect(cx-R*0.52,cy-R*0.38,R*0.22,R*0.55);
+  ctx2.fillRect(cx-R*0.52,cy-R*0.52,R*0.13,R*0.17);
+  // Wall right
+  ctx2.fillRect(cx+R*0.18,cy-R*0.28,R*0.22,R*0.42);
+  ctx2.fillRect(cx+R*0.28,cy-R*0.42,R*0.12,R*0.16);
+  // Rubble dots
+  ctx2.fillStyle='rgba(120,100,70,0.55)';
+  for(let i=0;i<5;i++)ctx2.fillRect(cx-R*0.1+(i*R*0.1),cy+R*0.18,R*0.08,R*0.08);
+  // Name
+  if(name){
+    ctx2.font=`italic ${R*0.34}px 'Open Sans',sans-serif`;ctx2.textAlign='center';ctx2.textBaseline='middle';
+    ctx2.fillStyle='rgba(0,0,0,0.55)';ctx2.fillText(name,cx+1,cy+R*0.7+1);
+    ctx2.fillStyle='rgba(200,170,110,0.9)';ctx2.fillText(name,cx,cy+R*0.7);
+    ctx2.textBaseline='alphabetic';
+  }
+}
+
+function drawCastleIcon(cx,cy,R,ctx2,name){
+  // Main keep
+  ctx2.fillStyle='rgba(180,170,155,0.65)';
+  ctx2.fillRect(cx-R*0.3,cy-R*0.5,R*0.6,R*0.72);
+  // Battlements
+  ctx2.fillStyle='rgba(160,150,135,0.65)';
+  for(let i=0;i<3;i++)ctx2.fillRect(cx-R*0.28+i*R*0.22,cy-R*0.62,R*0.15,R*0.14);
+  // Gate arch
+  ctx2.fillStyle='rgba(20,15,10,0.65)';
+  ctx2.beginPath();ctx2.arc(cx,cy+R*0.05,R*0.16,Math.PI,0);ctx2.rect(cx-R*0.16,cy+R*0.05,R*0.32,R*0.22);ctx2.fill();
+  // Tower left
+  ctx2.fillStyle='rgba(160,150,135,0.6)';
+  ctx2.fillRect(cx-R*0.52,cy-R*0.42,R*0.22,R*0.62);
+  ctx2.fillRect(cx-R*0.52,cy-R*0.54,R*0.1,R*0.14);ctx2.fillRect(cx-R*0.36,cy-R*0.54,R*0.1,R*0.14);
+  // Tower right
+  ctx2.fillRect(cx+R*0.3,cy-R*0.42,R*0.22,R*0.62);
+  ctx2.fillRect(cx+R*0.3,cy-R*0.54,R*0.1,R*0.14);ctx2.fillRect(cx+R*0.46,cy-R*0.54,R*0.1,R*0.14);
+  // Flag
+  ctx2.strokeStyle='rgba(80,60,40,0.7)';ctx2.lineWidth=0.8;ctx2.beginPath();ctx2.moveTo(cx,cy-R*0.5);ctx2.lineTo(cx,cy-R*0.85);ctx2.stroke();
+  ctx2.fillStyle='rgba(200,40,40,0.8)';ctx2.beginPath();ctx2.moveTo(cx,cy-R*0.85);ctx2.lineTo(cx+R*0.25,cy-R*0.72);ctx2.lineTo(cx,cy-R*0.6);ctx2.closePath();ctx2.fill();
+  if(name){
+    ctx2.font=`bold ${R*0.34}px 'Open Sans',sans-serif`;ctx2.textAlign='center';ctx2.textBaseline='middle';
+    ctx2.fillStyle='rgba(0,0,0,0.55)';ctx2.fillText(name,cx+1,cy+R*0.75+1);
+    ctx2.fillStyle='rgba(230,210,160,0.95)';ctx2.fillText(name,cx,cy+R*0.75);
+    ctx2.textBaseline='alphabetic';
+  }
+}
+
+function drawSavanna(cx,cy,R,ctx2){
+  // Dry grass tufts
+  ctx2.strokeStyle='rgba(180,140,30,0.45)';ctx2.lineWidth=0.8;
+  for(let i=0;i<6;i++){const ox=(i%3-1)*R*0.3,oy=i<3?-R*0.15:R*0.18;for(let j=-1;j<=1;j++){ctx2.beginPath();ctx2.moveTo(cx+ox,cy+oy+R*0.2);ctx2.lineTo(cx+ox+j*R*0.07,cy+oy-R*0.14);ctx2.stroke();}}
+}
+
+// ─── River rendering ──────────────────────────────────────────────────────────
+function drawRiverOverlay(cx,cy,R,ctx2,neighbors){
+  ctx2.strokeStyle='rgba(40,120,200,0.65)';ctx2.lineWidth=R*0.28;ctx2.lineCap='round';
+  // Draw line from center toward each river neighbor
+  if(neighbors&&neighbors.length){
+    for(const[nx,ny] of neighbors){
+      ctx2.beginPath();ctx2.moveTo(cx,cy);ctx2.lineTo(cx+(nx-cx)*0.55,cy+(ny-cy)*0.55);ctx2.stroke();
+    }
+  }
+  // Center pool
+  ctx2.fillStyle='rgba(40,100,180,0.6)';ctx2.beginPath();ctx2.arc(cx,cy,R*0.2,0,Math.PI*2);ctx2.fill();
+}
+
+// ─── Main map state ───────────────────────────────────────────────────────────
 const canvas=document.getElementById('mapCanvas');
 const ctx=canvas.getContext('2d');
 const mapArea=document.getElementById('mapArea');
-let hexGrid=[];let settlements=[];let mapCols=0;let mapRows=0;let hexSize=22;
-let offsetX=0,offsetY=0,zoom=1;
-let isDragging=false,dragStartX=0,dragStartY=0,dragOffsetX=0,dragOffsetY=0;
+let grid=[],settlements=[],cols=0,rows=0,HEX_R=22;
+let ox=0,oy=0,zoom=1;
+let dragging=false,dsx=0,dsy=0,dox=0,doy=0;
 let renamingIdx=-1;
-const SIZES={small:{cols:30,rows:22},medium:{cols:48,rows:34},large:{cols:64,rows:46}};
+const SIZES={small:{cols:32,rows:24},medium:{cols:52,rows:38},large:{cols:72,rows:52}};
 
-// ── Pan & zoom ────────────────────────────────────────────────────────────────
+// ─── Pan ──────────────────────────────────────────────────────────────────────
 mapArea.addEventListener('mousedown',e=>{
   if(e.button!==0)return;
-  const tt=document.getElementById('renameTooltip');
-  if(tt.style.display==='flex'){tt.style.display='none';return;}
-  isDragging=true;dragStartX=e.clientX;dragStartY=e.clientY;
-  dragOffsetX=offsetX;dragOffsetY=offsetY;
+  const pop=document.getElementById('renamePop');
+  if(pop.style.display==='flex'){pop.style.display='none';return;}
+  dragging=true;dsx=e.clientX;dsy=e.clientY;dox=ox;doy=oy;
+  mapArea.classList.add('dragging');
 });
 mapArea.addEventListener('mousemove',e=>{
-  if(!isDragging)return;
-  offsetX=dragOffsetX+(e.clientX-dragStartX);
-  offsetY=dragOffsetY+(e.clientY-dragStartY);
-  positionCanvas();
+  if(!dragging)return;
+  ox=dox+(e.clientX-dsx);oy=doy+(e.clientY-dsy);
+  canvas.style.left=ox+'px';canvas.style.top=oy+'px';
 });
 mapArea.addEventListener('mouseup',e=>{
-  if(!isDragging)return;
-  const moved=Math.abs(e.clientX-dragStartX)+Math.abs(e.clientY-dragStartY);
-  isDragging=false;
-  if(moved<5) handleMapClick(e);
+  if(!dragging)return;
+  const moved=Math.abs(e.clientX-dsx)+Math.abs(e.clientY-dsy);
+  dragging=false;mapArea.classList.remove('dragging');
+  if(moved<5&&grid.length)handleClick(e);
 });
-mapArea.addEventListener('mouseleave',()=>{isDragging=false;});
+mapArea.addEventListener('mouseleave',()=>{dragging=false;mapArea.classList.remove('dragging');});
 
-// Touch support
-let touchStartX=0,touchStartY=0,touchOffX=0,touchOffY=0;
-mapArea.addEventListener('touchstart',e=>{
-  if(e.touches.length===1){touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;touchOffX=offsetX;touchOffY=offsetY;}
-},{passive:true});
-mapArea.addEventListener('touchmove',e=>{
-  if(e.touches.length===1){offsetX=touchOffX+(e.touches[0].clientX-touchStartX);offsetY=touchOffY+(e.touches[0].clientY-touchStartY);positionCanvas();}
-},{passive:true});
+// Touch
+let tsx=0,tsy=0,tox=0,toy=0;
+mapArea.addEventListener('touchstart',e=>{if(e.touches.length===1){tsx=e.touches[0].clientX;tsy=e.touches[0].clientY;tox=ox;toy=oy;}},{passive:true});
+mapArea.addEventListener('touchmove',e=>{if(e.touches.length===1){ox=tox+(e.touches[0].clientX-tsx);oy=toy+(e.touches[0].clientY-tsy);canvas.style.left=ox+'px';canvas.style.top=oy+'px';}},{passive:true});
 
-// Scroll to zoom
-mapArea.addEventListener('wheel',e=>{
-  e.preventDefault();
-  const delta=e.deltaY>0?-0.1:0.1;
-  zoom=Math.max(0.3,Math.min(3,+(zoom+delta).toFixed(2)));
-  updateZoom();
-},{passive:false});
+// Scroll zoom
+mapArea.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(0.25,Math.min(3,+(zoom+(e.deltaY>0?-0.1:0.1)).toFixed(2)));applyZoom();},{passive:false});
+document.getElementById('zIn').onclick=()=>{zoom=Math.min(3,+(zoom+0.2).toFixed(2));applyZoom();};
+document.getElementById('zOut').onclick=()=>{zoom=Math.max(0.25,+(zoom-0.2).toFixed(2));applyZoom();};
+document.getElementById('zRst').onclick=()=>{zoom=1;centerMap();};
 
-document.getElementById('zoomIn').onclick=()=>{zoom=Math.min(3,+(zoom+0.2).toFixed(2));updateZoom();};
-document.getElementById('zoomOut').onclick=()=>{zoom=Math.max(0.3,+(zoom-0.2).toFixed(2));updateZoom();};
-document.getElementById('zoomReset').onclick=()=>{zoom=1;centerMap();};
-
-function updateZoom(){
-  canvas.style.transform=`scale(${zoom})`;
-  canvas.style.transformOrigin='top left';
-  document.getElementById('zoomLabel').textContent=Math.round(zoom*100)+'%';
+function applyZoom(){
+  canvas.style.transform=`scale(${zoom})`;canvas.style.transformOrigin='top left';
+  document.getElementById('zLbl').textContent=Math.round(zoom*100)+'%';
 }
-
-function positionCanvas(){
-  canvas.style.left=offsetX+'px';
-  canvas.style.top=offsetY+'px';
-}
-
 function centerMap(){
-  const area=mapArea.getBoundingClientRect();
-  offsetX=Math.max(0,(area.width-canvas.width)/2);
-  offsetY=Math.max(0,(area.height-canvas.height)/2);
-  positionCanvas();updateZoom();
+  const ar=mapArea.getBoundingClientRect();
+  ox=Math.max(0,(ar.width-canvas.width*zoom)/2);
+  oy=Math.max(0,(ar.height-canvas.height*zoom)/2);
+  canvas.style.left=ox+'px';canvas.style.top=oy+'px';applyZoom();
 }
 
-// ── Click to rename ───────────────────────────────────────────────────────────
-function handleMapClick(e){
+// ─── Click rename ─────────────────────────────────────────────────────────────
+function handleClick(e){
   if(!settlements.length)return;
   const rect=mapArea.getBoundingClientRect();
-  const mx=(e.clientX-rect.left-offsetX)/zoom;
-  const my=(e.clientY-rect.top-offsetY)/zoom;
+  const mx=(e.clientX-rect.left-ox)/zoom,my=(e.clientY-rect.top-oy)/zoom;
   for(let i=0;i<settlements.length;i++){
     const s=settlements[i];
-    const dist=Math.sqrt((s.px-mx)**2+(s.py-my)**2);
-    if(dist<hexSize*1.5){
+    if(Math.sqrt((s.px-mx)**2+(s.py-my)**2)<HEX_R*1.6){
       renamingIdx=i;
-      const tt=document.getElementById('renameTooltip');
-      document.getElementById('renameInput').value=s.name;
-      tt.style.display='flex';
-      tt.style.left=(s.px*zoom+offsetX+10)+'px';
-      tt.style.top=(s.py*zoom+offsetY-30)+'px';
-      document.getElementById('renameInput').focus();
-      return;
+      const pop=document.getElementById('renamePop');
+      document.getElementById('renameIn').value=s.name;
+      pop.style.display='flex';
+      pop.style.left=(s.px*zoom+ox+10)+'px';
+      pop.style.top=(s.py*zoom+oy-30)+'px';
+      document.getElementById('renameIn').focus();return;
     }
   }
 }
 document.getElementById('renameOk').onclick=()=>{
-  if(renamingIdx>=0){settlements[renamingIdx].name=document.getElementById('renameInput').value;renderMap();refreshTownList();}
-  document.getElementById('renameTooltip').style.display='none';
+  if(renamingIdx>=0){settlements[renamingIdx].name=document.getElementById('renameIn').value;renderMap();refreshList();}
+  document.getElementById('renamePop').style.display='none';
 };
-document.getElementById('renameCancel').onclick=()=>{document.getElementById('renameTooltip').style.display='none';};
-document.getElementById('renameInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('renameOk').click();});
+document.getElementById('renameCancel').onclick=()=>{document.getElementById('renamePop').style.display='none';};
+document.getElementById('renameIn').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('renameOk').click();});
 
-// ── Town list ─────────────────────────────────────────────────────────────────
-function refreshTownList(){
+// ─── Town list ────────────────────────────────────────────────────────────────
+function refreshList(){
   const list=document.getElementById('townList');
-  if(!settlements.length){list.innerHTML='<div style="font-size:0.75rem;color:var(--text-muted);text-align:center;padding:6px;">No settlements</div>';return;}
-  list.innerHTML=settlements.map((s,i)=>`
-    <div class="town-item">
-      <div class="town-dot ${s.isCity?'city':''}"></div>
-      <input type="text" value="${s.name}" data-idx="${i}" class="tni"/>
-    </div>`).join('');
+  if(!settlements.length){list.innerHTML='<div style="font-size:0.72rem;color:var(--text-muted);padding:4px;">No settlements</div>';return;}
+  list.innerHTML=settlements.map((s,i)=>`<div class="town-item"><div class="town-dot ${s.isCity?'city':''}"></div><input type="text" value="${s.name}" data-idx="${i}" class="tni"/></div>`).join('');
   list.querySelectorAll('.tni').forEach(inp=>inp.addEventListener('change',e=>{settlements[+e.target.dataset.idx].name=e.target.value;renderMap();}));
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
+// ─── Render ───────────────────────────────────────────────────────────────────
 function renderMap(){
-  if(!hexGrid.length)return;
+  if(!grid.length)return;
   ctx.clearRect(0,0,canvas.width,canvas.height);
+  // Dark ocean bg
+  ctx.fillStyle='#080e1a';ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // Ocean background
-  ctx.fillStyle='#0d1e2e';
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  // Draw hexes
-  for(let row=0;row<mapRows;row++){
-    for(let col=0;col<mapCols;col++){
-      const tile=hexGrid[row][col];
-      if(!tile)continue;
-      const {x,y}=hexToPixel(col,row,hexSize);
-      const cx=x+hexSize,cy=y+hexSize*Math.sqrt(3)/2;
-      drawHex(cx,cy,hexSize,tile);
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const tile=grid[r][c];if(!tile)continue;
+      const{x,y}=hexCenter(c,r,HEX_R);
+      drawHexGradient(x,y,HEX_R,tile,ctx);
+      drawFeature(x,y,HEX_R,tile,r,c);
     }
   }
 
-  // Draw rivers (highlight certain coast/river tiles)
-  // Draw features
-  for(let row=0;row<mapRows;row++){
-    for(let col=0;col<mapCols;col++){
-      const tile=hexGrid[row][col];
-      if(!tile)continue;
-      const {x,y}=hexToPixel(col,row,hexSize);
-      const cx=x+hexSize,cy=y+hexSize*Math.sqrt(3)/2;
-      drawTileIcon(cx,cy,hexSize,tile);
-    }
-  }
-
-  // Draw roads between settlements
+  // Roads
   if(settlements.length>1){
-    ctx.strokeStyle='rgba(200,160,80,0.55)';ctx.lineWidth=2;ctx.setLineDash([5,4]);
+    ctx.save();ctx.strokeStyle='rgba(200,165,80,0.45)';ctx.lineWidth=2;ctx.setLineDash([5,4]);
     for(let i=0;i<settlements.length-1;i++){
-      if(Math.random()>0.6)continue;
-      ctx.beginPath();ctx.moveTo(settlements[i].px,settlements[i].py);ctx.lineTo(settlements[i+1].px,settlements[i+1].py);ctx.stroke();
+      if(settlements[i].roadTo&&settlements[i+1]){
+        ctx.beginPath();ctx.moveTo(settlements[i].px,settlements[i].py);ctx.lineTo(settlements[i+1].px,settlements[i+1].py);ctx.stroke();
+      }
     }
-    ctx.setLineDash([]);
+    ctx.setLineDash([]);ctx.restore();
   }
 
-  // Draw settlements
+  // Settlement markers
   settlements.forEach(s=>{
-    const r=s.isCity?hexSize*0.5:hexSize*0.35;
-    // Outer ring
-    ctx.strokeStyle=s.isCity?'#e85555':'#e8b84b';
-    ctx.lineWidth=s.isCity?2.5:2;
-    ctx.fillStyle=s.isCity?'rgba(232,85,85,0.25)':'rgba(232,184,75,0.2)';
-    ctx.beginPath();ctx.arc(s.px,s.py,r,0,Math.PI*2);ctx.fill();ctx.stroke();
-    // Inner dot
-    ctx.fillStyle=s.isCity?'#e85555':'#e8b84b';
-    ctx.beginPath();ctx.arc(s.px,s.py,r*0.4,0,Math.PI*2);ctx.fill();
+    const R=HEX_R;
+    // Outer glow ring
+    const gc=ctx.createRadialGradient(s.px,s.py,0,s.px,s.py,R*0.75);
+    gc.addColorStop(0,s.isCity?'rgba(232,85,85,0.35)':'rgba(232,184,75,0.3)');
+    gc.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=gc;ctx.beginPath();ctx.arc(s.px,s.py,R*0.75,0,Math.PI*2);ctx.fill();
+    // Ring
+    ctx.strokeStyle=s.isCity?'#e85545':'#e8c84a';ctx.lineWidth=s.isCity?2.2:1.8;
+    ctx.fillStyle=s.isCity?'rgba(232,85,85,0.2)':'rgba(232,200,75,0.18)';
+    ctx.beginPath();ctx.arc(s.px,s.py,R*0.46,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // Center dot
+    ctx.fillStyle=s.isCity?'#e85545':'#e8c84a';
+    ctx.beginPath();ctx.arc(s.px,s.py,R*0.18,0,Math.PI*2);ctx.fill();
     // Name label
-    ctx.font=`${s.isCity?'600 ':''} ${s.isCity?11:9.5}px 'Open Sans',sans-serif`;
-    ctx.textAlign='center';
-    // Shadow
-    ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillText(s.name,s.px+1,s.py-r-4+1);
-    ctx.fillStyle=s.isCity?'#ffdddd':'#ffe8a0';
-    ctx.fillText(s.name,s.px,s.py-r-4);
+    const fs=s.isCity?11:9.5;
+    ctx.font=`${s.isCity?'600 ':''}${fs}px 'Open Sans',sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    // Drop shadow
+    ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillText(s.name,s.px+1,s.py-R*0.62+1);
+    ctx.fillStyle=s.isCity?'#ffcece':'#fff0b0';ctx.fillText(s.name,s.px,s.py-R*0.62);
+    ctx.textBaseline='alphabetic';
   });
 }
 
-function drawHex(cx,cy,size,tile){
-  ctx.beginPath();
-  for(let i=0;i<6;i++){const c=hexCorner(cx,cy,size-0.5,i);i===0?ctx.moveTo(c.x,c.y):ctx.lineTo(c.x,c.y);}
-  ctx.closePath();
-  ctx.fillStyle=tile.fill;ctx.fill();
-  ctx.strokeStyle=tile.stroke;ctx.lineWidth=0.8;ctx.stroke();
-}
-
-function drawTileIcon(cx,cy,size,tile){
-  const t=tile.type;
-  ctx.textAlign='center';ctx.textBaseline='middle';
-  if(t==='MOUNTAINS'||t==='SNOW_PEAK'){
-    // Mountain triangle
-    ctx.fillStyle=t==='SNOW_PEAK'?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.4)';
-    const s=size*0.45;
-    ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx-s*0.8,cy+s*0.5);ctx.lineTo(cx+s*0.8,cy+s*0.5);ctx.closePath();ctx.fill();
-    if(t==='SNOW_PEAK'){ctx.fillStyle='rgba(220,235,255,0.85)';ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx-s*0.28,cy-s*0.3);ctx.lineTo(cx+s*0.28,cy-s*0.3);ctx.closePath();ctx.fill();}
-  } else if(t==='FOREST'||t==='JUNGLE'){
-    ctx.font=`${size*0.85}px serif`;ctx.fillStyle='rgba(255,255,255,0.35)';
-    ctx.fillText(t==='JUNGLE'?'🌴':'🌲',cx,cy);
-  } else if(t==='SWAMP'){
-    ctx.font=`${size*0.75}px serif`;ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText('🌿',cx,cy);
-  } else if(t==='DESERT'){
-    ctx.font=`${size*0.7}px serif`;ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillText('🏜',cx,cy);
-  } else if(t==='SNOW'||t==='TUNDRA'){
-    ctx.fillStyle='rgba(200,220,255,0.35)';ctx.font=`${size*0.55}px serif`;ctx.fillText('❄',cx,cy);
-  } else if(t==='LAVA'){
-    ctx.fillStyle='rgba(255,160,50,0.5)';ctx.font=`${size*0.7}px serif`;ctx.fillText('🔥',cx,cy);
-  } else if(t==='VOLCANIC'){
-    ctx.fillStyle='rgba(255,100,30,0.35)';ctx.font=`${size*0.7}px serif`;ctx.fillText('🌋',cx,cy);
-  } else if(t==='HILLS'){
-    // Hill bumps
-    ctx.fillStyle='rgba(255,255,255,0.22)';
-    ctx.beginPath();ctx.arc(cx-size*0.22,cy+size*0.1,size*0.28,Math.PI,0);ctx.fill();
-    ctx.beginPath();ctx.arc(cx+size*0.2,cy+size*0.12,size*0.24,Math.PI,0);ctx.fill();
-  } else if(t==='RUINS'){
-    ctx.font=`${size*0.7}px serif`;ctx.fillStyle='rgba(255,200,150,0.6)';ctx.fillText('☠',cx,cy);
-    ctx.font=`italic ${size*0.38}px 'Open Sans',sans-serif`;
-    ctx.fillStyle='rgba(220,180,120,0.8)';ctx.fillText(tile.label,cx,cy+size*0.72);
-  } else if(t==='CASTLE'){
-    ctx.font=`${size*0.75}px serif`;ctx.fillStyle='rgba(255,220,180,0.65)';ctx.fillText('🏰',cx,cy);
-    ctx.font=`bold ${size*0.38}px 'Open Sans',sans-serif`;
-    ctx.fillStyle='rgba(255,220,180,0.85)';ctx.fillText(tile.label,cx,cy+size*0.75);
-  } else if(t==='LAKE'){
-    ctx.fillStyle='rgba(100,180,255,0.25)';ctx.font=`${size*0.55}px serif`;ctx.fillText('〜',cx,cy);
+function drawFeature(cx,cy,R,tile,r,c){
+  const id=tile.id;
+  if(id==='DEEP_OCEAN'||id==='OCEAN')drawWater(cx,cy,R,ctx,id==='DEEP_OCEAN');
+  else if(id==='COAST'||id==='SHALLOW')drawWater(cx,cy,R,ctx,false);
+  else if(id==='MOUNTAINS')drawMountain(cx,cy,R,ctx,false);
+  else if(id==='SNOW_PEAK')drawMountain(cx,cy,R,ctx,true);
+  else if(id==='HILLS')drawHills(cx,cy,R,ctx);
+  else if(id==='FOREST')drawTree(cx,cy,R,ctx,'forest');
+  else if(id==='JUNGLE')drawTree(cx,cy,R,ctx,'jungle');
+  else if(id==='DESERT')drawDesert(cx,cy,R,ctx);
+  else if(id==='TUNDRA')drawTundra(cx,cy,R,ctx,false);
+  else if(id==='SNOW')drawTundra(cx,cy,R,ctx,true);
+  else if(id==='SWAMP')drawSwamp(cx,cy,R,ctx);
+  else if(id==='VOLCANIC')drawVolcanic(cx,cy,R,ctx,false);
+  else if(id==='LAVA')drawVolcanic(cx,cy,R,ctx,true);
+  else if(id==='SAVANNA')drawSavanna(cx,cy,R,ctx);
+  else if(id==='RIVER'){
+    // River neighbors
+    const nbrs=[];
+    const dirs=c%2===0?[[0,-1],[1,-1],[1,0],[0,1],[-1,0],[-1,-1]]:[[0,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
+    for(const[dc,dr] of dirs){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&grid[nr][nc]&&(grid[nr][nc].id==='RIVER'||grid[nr][nc].id==='LAKE')){const{x:nx,y:ny}=hexCenter(nc,nr,HEX_R);nbrs.push([nx,ny]);}}
+    drawRiverOverlay(cx,cy,R,ctx,nbrs);
   }
-  ctx.textBaseline='alphabetic';
+  else if(id==='LAKE'){drawWater(cx,cy,R,ctx,false);}
+  else if(id==='RUINS')drawRuinsIcon(cx,cy,R,ctx,tile.label);
+  else if(id==='CASTLE')drawCastleIcon(cx,cy,R,ctx,tile.label);
 }
 
-// ── Generate ──────────────────────────────────────────────────────────────────
-function generateMap(){
+// ─── Names ────────────────────────────────────────────────────────────────────
+const PRE=['Aether','Brim','Cael','Drak','Eld','Fae','Grim','Helm','Iron','Jade','Kael','Lorn','Mor','Neth','Orm','Pyre','Quel','Raven','Stone','Thorn','Val','Wych','Xan','Yor','Zeph','Ash','Black','Cold','Dawn','Frost','Gold','High','Mist','Night','Oak','Silver'];
+const SUF=['haven','moor','fell','reach','hold','gate','shire','mere','dun','heim','keep','vale','ford','mark','fen','spire','watch','crest','brook','dale','field','glen','grove','hill','marsh','peak','ridge','rock','stead','tor','wood'];
+const TOWNS=['Ashford','Brackwater','Coldmere','Dusthaven','Elderwick','Frostgate','Grimhold','Harrowfen','Ironspire','Jadekeep','Kaldrath','Lornswick','Mirefall','Nethgate','Oldwatch','Pyremont','Quelford','Ravenstone','Stonegate','Thornwick','Ulvenmoor','Valeford','Wychwood','Xandrel','Yorkstead','Zephyrhold','Embervale','Frostwick','Goldfen','Highkeep','Irondale','Jadewood','Keldmoor','Lorndell','Mirehaven','Netherford','Ashwick','Blackmere','Cresthold','Dustwick'];
+const RUINS_N=['Shattered Keep','Tomb of Aelvar','Drakmore Ruins','Sunken Temple','Shadow Cradle','Void Citadel','Forgotten Spire','Grim Necropolis','Broken Gate','Xan Obelisk'];
+const CASTLE_N=['Ironhold','Drakenmoor','High Aerie','Stormwatch','Embercrown','Thornwall','Voidstone','Goldspire','Nightwatch','Bleakwall'];
+
+// ─── Generate ─────────────────────────────────────────────────────────────────
+function generate(){
   const sizeKey=document.getElementById('mapSize').value;
   const landType=document.getElementById('landType').value;
   const terrain=document.getElementById('terrain').value;
@@ -518,129 +663,80 @@ function generateMap(){
   const era=document.getElementById('era').value;
   const seedVal=document.getElementById('seedInput').value.trim();
   const seed=seedVal?hashStr(seedVal):Math.floor(Math.random()*2147483647);
-
   document.getElementById('seedInput').value=seed;
-  document.getElementById('topSeed').textContent='Seed: '+seed;
+  document.getElementById('seedBadge').textContent='Seed: '+seed;
 
-  const rng=createRNG(seed);
+  const rng=rngOf(seed);
   const sz=SIZES[sizeKey];
-  mapCols=sz.cols;mapRows=sz.rows;
-  hexSize=22;
-
-  // Canvas size
-  const cw=Math.ceil(hexSize*1.5*mapCols+hexSize*2);
-  const ch=Math.ceil(hexSize*Math.sqrt(3)*mapRows+hexSize*Math.sqrt(3));
+  cols=sz.cols;rows=sz.rows;HEX_R=22;
+  const cw=Math.ceil(HEX_R*1.5*cols+HEX_R*2.5);
+  const ch=Math.ceil(HEX_R*S3*rows+HEX_R*S3);
   canvas.width=cw;canvas.height=ch;
 
-  // Map name
   const mapName=PRE[Math.floor(rng()*PRE.length)]+SUF[Math.floor(rng()*SUF.length)];
-  document.getElementById('mapTitleText').textContent='The Realm of '+mapName;
-  document.getElementById('mapTitleBar').style.display='block';
+  document.getElementById('mapNameText').textContent='The Realm of '+mapName;
+  document.getElementById('mapName').style.display='block';
   document.getElementById('mapEmpty').style.display='none';
 
-  // Heightmap
-  const ng=makeNoise(rng,64,64);
-  const hm=[];
-  for(let row=0;row<mapRows;row++){
-    hm[row]=[];
-    for(let col=0;col<mapCols;col++){
-      const nx=col/mapCols*8,ny=row/mapRows*8;
-      let h=fbm(ng,nx,ny,6);
-      const lt=landType==='random'?['continent','island','archipelago','peninsula','inland','coastal'][Math.floor(rng()*6)]:landType;
-      if(lt==='island'){const dx=(col/mapCols-0.5)*2,dy=(row/mapRows-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.75;}
-      else if(lt==='archipelago'){const dx=(col/mapCols-0.5)*2,dy=(row/mapRows-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.55;}
-      else if(lt==='peninsula'){const dy=(row/mapRows-0.5)*2;h-=Math.abs(dy)*0.45+(1-col/mapCols)*0.3;}
-      else if(lt==='coastal'){h-=(1-col/mapCols)*0.55;}
-      else if(lt==='inland'){const dx=(col/mapCols-0.5)*2,dy=(row/mapRows-0.5)*2;h+=0.2-Math.sqrt(dx*dx+dy*dy)*0.15;}
-      else if(lt==='atoll'){const dx=(col/mapCols-0.5)*2,dy=(row/mapRows-0.5)*2;h-=Math.abs(Math.sqrt(dx*dx+dy*dy)-0.4)*2;}
-      else if(lt==='fjord'){h-=(1-col/mapCols)*0.3;if(row/mapRows>0.3&&row/mapRows<0.7)h+=0.1;}
-      else if(lt==='delta'){h-=(row/mapRows)*0.4;if(col/mapCols>0.3&&col/mapCols<0.7)h+=0.15;}
-      hm[row][col]=Math.max(0,Math.min(1,h));
-    }
+  // Noise maps
+  const hn=makeNoise(rng,64,64);
+  const mn=makeNoise(rng,32,32);
+  const hm=[],mm=[];
+  for(let r=0;r<rows;r++){hm[r]=[];mm[r]=[];for(let c=0;c<cols;c++){hm[r][c]=fbm(hn,c/cols*8,r/rows*8,6);mm[r][c]=fbm(mn,c/cols*6,r/rows*6,4);}}
+
+  // Shape land
+  const lt=landType==='random'?['continent','island','archipelago','peninsula','inland','coastal'][Math.floor(rng()*6)]:landType;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    let h=hm[r][c];
+    if(lt==='island'){const dx=(c/cols-0.5)*2,dy=(r/rows-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.75;}
+    else if(lt==='archipelago'){const dx=(c/cols-0.5)*2,dy=(r/rows-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.52;}
+    else if(lt==='peninsula'){const dy=(r/rows-0.5)*2;h-=Math.abs(dy)*0.42+(1-c/cols)*0.28;}
+    else if(lt==='coastal'){h-=(1-c/cols)*0.52;}
+    else if(lt==='inland'){const dx=(c/cols-0.5)*2,dy=(r/rows-0.5)*2;h+=0.18-Math.sqrt(dx*dx+dy*dy)*0.14;}
+    else if(lt==='atoll'){const dx=(c/cols-0.5)*2,dy=(r/rows-0.5)*2;h-=Math.abs(Math.sqrt(dx*dx+dy*dy)-0.38)*2;}
+    else if(lt==='fjord'){h-=(1-c/cols)*0.28;if(r/rows>0.3&&r/rows<0.7)h+=0.1;}
+    else if(lt==='delta'){h-=(r/rows)*0.38;if(c/cols>0.3&&c/cols<0.7)h+=0.14;}
+    hm[r][c]=Math.max(0,Math.min(1,h));
   }
 
-  // Moisture map
-  const mg=makeNoise(rng,32,32);
-  const mm=[];
-  for(let row=0;row<mapRows;row++){mm[row]=[];for(let col=0;col<mapCols;col++)mm[row][col]=fbm(mg,col/mapCols*6,row/mapRows*6,4);}
-
-  // Water threshold
   let wt=0.42;
-  if(waterType==='arid')wt=0.32;
+  if(waterType==='arid')wt=0.3;
   else if(waterType==='abundant')wt=0.5;
-  else if(waterType==='coastal')wt=0.45;
+  else if(waterType==='coastal')wt=0.44;
 
   // Assign tiles
-  hexGrid=[];
-  settlements=[];
-  const rng2=createRNG(seed+1);
-
-  for(let row=0;row<mapRows;row++){
-    hexGrid[row]=[];
-    for(let col=0;col<mapCols;col++){
-      const h=hm[row][col],m=mm[row][col];
-      let type,label='';
-      if(h<wt-0.1){type='DEEP_OCEAN';}
-      else if(h<wt){type='OCEAN';}
-      else if(h<wt+0.04){type='COAST';}
+  grid=[];settlements=[];
+  const rng2=rngOf(seed+7);
+  for(let r=0;r<rows;r++){
+    grid[r]=[];
+    for(let c=0;c<cols;c++){
+      const h=hm[r][c],m=mm[r][c];
+      let type;
+      if(h<wt-0.12)type='DEEP_OCEAN';
+      else if(h<wt-0.04)type='OCEAN';
+      else if(h<wt)type='COAST';
+      else if(h<wt+0.03)type='SHALLOW';
       else{
         const lh=(h-wt)/(1-wt);
         switch(terrain){
-          case 'mountains':
-            if(lh>0.8)type='SNOW_PEAK';
-            else if(lh>0.55)type='MOUNTAINS';
-            else if(lh>0.3)type='HILLS';
-            else type=m>0.55?'FOREST':'PLAINS';
-            break;
-          case 'forest':
-            if(lh>0.75)type='MOUNTAINS';
-            else if(lh>0.45)type='FOREST';
-            else type='GRASSLAND';
-            break;
-          case 'jungle':
-            if(lh>0.75)type='MOUNTAINS';
-            else if(lh>0.35)type='JUNGLE';
-            else type='GRASSLAND';
-            break;
-          case 'desert':
-            if(lh>0.78)type='MOUNTAINS';
-            else if(lh>0.5)type='HILLS';
-            else type='DESERT';
-            break;
-          case 'tundra':
-            if(lh>0.7)type='SNOW_PEAK';
-            else if(lh>0.45)type='SNOW';
-            else type='TUNDRA';
-            break;
-          case 'swamp':
-            if(lh>0.7)type='MOUNTAINS';
-            else if(lh>0.4)type=m>0.5?'FOREST':'SWAMP';
-            else type='SWAMP';
-            break;
-          case 'plains':
-            if(lh>0.75)type='MOUNTAINS';
-            else if(lh>0.5)type='HILLS';
-            else type=m>0.6?'GRASSLAND':'PLAINS';
-            break;
-          case 'savanna':
-            if(lh>0.78)type='MOUNTAINS';
-            else if(lh>0.5)type='HILLS';
-            else type=m>0.55?'PLAINS':'SAVANNA';
-            break;
-          case 'volcanic':
-            if(lh>0.75)type='LAVA';
-            else if(lh>0.5)type='VOLCANIC';
-            else type=m>0.5?'HILLS':'VOLCANIC';
-            break;
-          default: // mixed
-            if(lh>0.82)type='SNOW_PEAK';
-            else if(lh>0.65)type='MOUNTAINS';
-            else if(lh>0.5)type=m>0.5?'FOREST':'HILLS';
-            else if(lh>0.3)type=m>0.65?'FOREST':m>0.4?'GRASSLAND':'PLAINS';
-            else type=m>0.6?'SWAMP':m>0.3?'PLAINS':'DESERT';
+          case 'mountains':type=lh>0.82?'SNOW_PEAK':lh>0.58?'MOUNTAINS':lh>0.32?'HILLS':m>0.5?'FOREST':'PLAINS';break;
+          case 'forest':type=lh>0.72?'MOUNTAINS':lh>0.42?'FOREST':'GRASSLAND';break;
+          case 'jungle':type=lh>0.72?'MOUNTAINS':lh>0.32?'JUNGLE':'GRASSLAND';break;
+          case 'desert':type=lh>0.76?'MOUNTAINS':lh>0.48?'HILLS':'DESERT';break;
+          case 'tundra':type=lh>0.72?'SNOW_PEAK':lh>0.44?'SNOW':'TUNDRA';break;
+          case 'swamp':type=lh>0.68?'MOUNTAINS':lh>0.38?'SWAMP':'SWAMP';break;
+          case 'plains':type=lh>0.74?'MOUNTAINS':lh>0.5?'HILLS':m>0.6?'GRASSLAND':'PLAINS';break;
+          case 'savanna':type=lh>0.76?'MOUNTAINS':lh>0.5?'HILLS':m>0.55?'PLAINS':'SAVANNA';break;
+          case 'volcanic':type=lh>0.72?'LAVA':lh>0.45?'VOLCANIC':'VOLCANIC';break;
+          default:
+            if(lh>0.84)type='SNOW_PEAK';
+            else if(lh>0.66)type='MOUNTAINS';
+            else if(lh>0.5)type=m>0.52?'FOREST':'HILLS';
+            else if(lh>0.28)type=m>0.65?'FOREST':m>0.4?'GRASSLAND':'PLAINS';
+            else type=m>0.62?'SWAMP':m>0.32?'PLAINS':'DESERT';
         }
       }
-      hexGrid[row][col]={...TILE[type],type,label};
+      grid[r][c]={...T[type],label:''};
     }
   }
 
@@ -648,107 +744,101 @@ function generateMap(){
   if(waterType!=='arid'&&waterType!=='rivers'){
     const nl=waterType==='lakes'||waterType==='abundant'?8:3;
     for(let l=0;l<nl;l++){
-      const lc=2+Math.floor(rng2()*( mapCols-4)),lr=2+Math.floor(rng2()*(mapRows-4));
-      if(hm[lr][lc]<wt+0.05)continue;
-      const lsz=1+Math.floor(rng2()*3);
+      const lc=2+Math.floor(rng2()*(cols-4)),lr=2+Math.floor(rng2()*(rows-4));
+      if(hm[lr]?.[lc]<wt+0.05)continue;
+      const lsz=1+Math.floor(rng2()*2);
       for(let dr=-lsz;dr<=lsz;dr++)for(let dc=-lsz;dc<=lsz;dc++){
         const nr=lr+dr,nc=lc+dc;
-        if(nr>=0&&nr<mapRows&&nc>=0&&nc<mapCols&&Math.sqrt(dr*dr+dc*dc)<=lsz&&hm[nr][nc]>wt)
-          hexGrid[nr][nc]={...TILE['LAKE'],type:'LAKE',label:''};
+        if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&Math.sqrt(dr*dr+dc*dc)<=lsz&&hm[nr][nc]>wt)
+          grid[nr][nc]={...T['LAKE'],label:''};
       }
     }
   }
 
-  // Rivers (mark certain hex columns)
+  // Rivers
   if(waterType!=='arid'&&waterType!=='lakes'){
-    const nr=waterType==='rivers'||waterType==='abundant'?5:2;
-    for(let r2=0;r2<nr;r2++){
-      let rc=2+Math.floor(rng2()*(mapCols-4)),rr=0;
-      // find a high starting point
-      while(rr<mapRows&&(hm[rr][rc]||0)<wt+0.12)rr++;
-      for(let step=0;step<mapRows&&rr<mapRows&&rc>=0&&rc<mapCols;step++){
-        if(hm[rr][rc]<wt)break;
-        if(hexGrid[rr][rc].type!=='LAKE')hexGrid[rr][rc]={...TILE['RIVER'],type:'RIVER',label:''};
-        // flow towards lower hex
-        let bestR=rr+1,bestC=rc,bestH=hm[rr+1]?.[rc]||0;
-        const neighbors=[[rr+1,rc-1],[rr+1,rc],[rr+1,rc+1],[rr,rc-1],[rr,rc+1]];
-        for(const[nr2,nc2]of neighbors){if(nr2>=0&&nr2<mapRows&&nc2>=0&&nc2<mapCols){const nh=hm[nr2][nc2]||0;if(nh<bestH){bestH=nh;bestR=nr2;bestC=nc2;}}}
-        rr=bestR;rc=bestC;
+    const nr=waterType==='rivers'||waterType==='abundant'?6:3;
+    for(let ri=0;ri<nr;ri++){
+      let rc=2+Math.floor(rng2()*(cols-4)),rr=0;
+      while(rr<rows&&(hm[rr]?.[rc]||0)<wt+0.14)rr++;
+      for(let step=0;step<rows*2&&rr<rows&&rc>=0&&rc<cols;step++){
+        if((hm[rr]?.[rc]||0)<wt)break;
+        const cur=grid[rr][rc];
+        if(cur&&cur.id!=='LAKE'&&cur.id!=='CASTLE'&&cur.id!=='RUINS')grid[rr][rc]={...T['RIVER'],label:''};
+        let br=rr+1,bc=rc,bh=hm[rr+1]?.[rc]||0;
+        const nbs=[[rr+1,rc-1],[rr+1,rc],[rr+1,rc+1],[rr,rc-1],[rr,rc+1]];
+        for(const[nr2,nc2]of nbs){if(nr2>=0&&nr2<rows&&nc2>=0&&nc2<cols){const nh=hm[nr2]?.[nc2]||0;if(nh<bh){bh=nh;br=nr2;bc=nc2;}}}
+        rr=br;rc=bc;
       }
     }
   }
 
-  // Ruins & Castles
+  // Ruins
   const numRuins=era==='ancient'?6:era==='dark'?5:era==='apocalyptic'?7:3;
-  const numCastles=settlementCount==='none'?0:settlementCount==='few'?1:settlementCount==='many'?4:2;
-  const usedR=new Set(),usedC=new Set();
-
-  for(let r3=0;r3<numRuins*6;r3++){
-    if([...usedR].length>=numRuins)break;
-    const rc=2+Math.floor(rng2()*(mapCols-4)),rr=2+Math.floor(rng2()*(mapRows-4));
-    if(hm[rr][rc]<wt+0.04)continue;
-    const ttype=hexGrid[rr][rc].type;
-    if(['OCEAN','DEEP_OCEAN','COAST','LAKE','RIVER'].includes(ttype))continue;
-    let rname;do{rname=RUINS[Math.floor(rng2()*RUINS.length)];}while(usedR.has(rname));
-    usedR.add(rname);
-    hexGrid[rr][rc]={...hexGrid[rr][rc],type:'RUINS',label:rname};
+  const usedR=new Set();
+  for(let ri=0;ri<numRuins*8&&[...usedR].length<numRuins;ri++){
+    const rc=2+Math.floor(rng2()*(cols-4)),rr=2+Math.floor(rng2()*(rows-4));
+    if((hm[rr]?.[rc]||0)<wt+0.04)continue;
+    const id=grid[rr]?.[rc]?.id;
+    if(!id||['OCEAN','DEEP_OCEAN','COAST','LAKE','RIVER'].includes(id))continue;
+    let nm;do{nm=RUINS_N[Math.floor(rng2()*RUINS_N.length)];}while(usedR.has(nm));
+    usedR.add(nm);
+    grid[rr][rc]={...T['RUINS'],label:nm};
   }
 
-  for(let c=0;c<numCastles*6;c++){
-    if([...usedC].length>=numCastles)break;
-    const cc=2+Math.floor(rng2()*(mapCols-4)),cr=2+Math.floor(rng2()*(mapRows-4));
-    if(hm[cr][cc]<wt+0.05)continue;
-    const ttype=hexGrid[cr][cc].type;
-    if(['OCEAN','DEEP_OCEAN','COAST','LAKE','RIVER','RUINS'].includes(ttype))continue;
-    let cname;do{cname=CASTLES[Math.floor(rng2()*CASTLES.length)];}while(usedC.has(cname));
-    usedC.add(cname);
-    hexGrid[cr][cc]={...hexGrid[cr][cc],type:'CASTLE',label:cname};
+  // Castles
+  const numCastles=settlementCount==='none'?0:settlementCount==='few'?1:settlementCount==='many'?4:2;
+  const usedC=new Set();
+  for(let ci=0;ci<numCastles*8&&[...usedC].length<numCastles;ci++){
+    const cc=2+Math.floor(rng2()*(cols-4)),cr=2+Math.floor(rng2()*(rows-4));
+    if((hm[cr]?.[cc]||0)<wt+0.05)continue;
+    const id=grid[cr]?.[cc]?.id;
+    if(!id||['OCEAN','DEEP_OCEAN','COAST','LAKE','RIVER','RUINS'].includes(id))continue;
+    let nm;do{nm=CASTLE_N[Math.floor(rng2()*CASTLE_N.length)];}while(usedC.has(nm));
+    usedC.add(nm);
+    grid[cr][cc]={...T['CASTLE'],label:nm};
   }
 
   // Settlements
-  const numS=settlementCount==='none'?0:settlementCount==='few'?3:settlementCount==='many'?14:7;
+  const numS=settlementCount==='none'?0:settlementCount==='few'?4:settlementCount==='many'?16:8;
   const usedN=new Set();
-  for(let s=0;s<numS;s++){
+  for(let si=0;si<numS;si++){
     let att=0;
     while(att<80){
-      const sc=2+Math.floor(rng2()*(mapCols-4)),sr=2+Math.floor(rng2()*(mapRows-4));
-      if(hm[sr][sc]<wt+0.04){att++;continue;}
-      const ttype=hexGrid[sr][sc].type;
-      if(['OCEAN','DEEP_OCEAN','LAKE','RIVER','RUINS','CASTLE'].includes(ttype)){att++;continue;}
+      const sc=2+Math.floor(rng2()*(cols-4)),sr=2+Math.floor(rng2()*(rows-4));
+      if((hm[sr]?.[sc]||0)<wt+0.04){att++;continue;}
+      const id=grid[sr]?.[sc]?.id;
+      if(!id||['OCEAN','DEEP_OCEAN','LAKE','RIVER','RUINS','CASTLE'].includes(id)){att++;continue;}
       let nm;do{nm=TOWNS[Math.floor(rng2()*TOWNS.length)];}while(usedN.has(nm));
       usedN.add(nm);
-      const {x,y}=hexToPixel(sc,sr,hexSize);
-      const px=x+hexSize,py=y+hexSize*Math.sqrt(3)/2;
-      settlements.push({col:sc,row:sr,px,py,name:nm,isCity:rng2()>0.55});
+      const{x,y}=hexCenter(sc,sr,HEX_R);
+      settlements.push({col:sc,row:sr,px:x,py:y,name:nm,isCity:rng2()>0.55,roadTo:rng2()>0.4});
       break;
     }
   }
 
-  // Legend
-  const typesOnMap=new Set();
-  hexGrid.forEach(row=>row.forEach(t=>{if(t)typesOnMap.add(t.type);}));
-  const legendItems=[...typesOnMap].filter(t=>!['RUINS','CASTLE'].includes(t)).slice(0,10);
-  document.getElementById('legendGrid').innerHTML=legendItems.map(t=>`
-    <div class="legend-item">
-      <div class="legend-swatch" style="background:${TILE[t].fill};border-color:${TILE[t].stroke}"></div>
-      <span>${TILE[t].label}</span>
-    </div>`).join('');
-  if(numRuins>0)document.getElementById('legendGrid').innerHTML+=`<div class="legend-item"><div class="legend-swatch" style="background:#3a2a18;font-size:9px;display:flex;align-items:center;justify-content:center;">☠</div><span>Ruins</span></div>`;
-  if(numCastles>0)document.getElementById('legendGrid').innerHTML+=`<div class="legend-item"><div class="legend-swatch" style="background:#3a3028;font-size:9px;display:flex;align-items:center;justify-content:center;">🏰</div><span>Castle</span></div>`;
+  // Build legend
+  const seen=new Set();
+  grid.forEach(row=>row.forEach(t=>{if(t&&!seen.has(t.id)&&!['RUINS','CASTLE'].includes(t.id))seen.add(t.id);}));
+  let legHtml=[...seen].slice(0,12).map(id=>`<div class="leg-item"><div class="leg-sw" style="background:${T[id].mid}"></div><span>${T[id].label}</span></div>`).join('');
+  if(numRuins>0)legHtml+=`<div class="leg-item"><div class="leg-sw" style="background:${T.RUINS.mid}"></div><span>Ruins</span></div>`;
+  if(numCastles>0)legHtml+=`<div class="leg-item"><div class="leg-sw" style="background:${T.CASTLE.mid}"></div><span>Castle</span></div>`;
+  if(numS>0)legHtml+=`<div class="leg-item"><div class="leg-sw" style="background:#e8c84a;border-radius:50%"></div><span>Settlement</span></div>`;
+  document.getElementById('legendGrid').innerHTML=legHtml;
 
   renderMap();
-  refreshTownList();
+  refreshList();
   setTimeout(centerMap,50);
 }
 
-// ── Events ────────────────────────────────────────────────────────────────────
-document.getElementById('generateBtn').addEventListener('click',()=>{
-  const btn=document.getElementById('generateBtn');
+// ─── Buttons ──────────────────────────────────────────────────────────────────
+document.getElementById('forgeBtn').addEventListener('click',()=>{
+  const btn=document.getElementById('forgeBtn');
   btn.textContent='⏳ FORGING…';btn.disabled=true;
-  setTimeout(()=>{generateMap();btn.textContent='⚔ FORGE REALM';btn.disabled=false;},40);
+  setTimeout(()=>{generate();btn.textContent='⚔ FORGE REALM';btn.disabled=false;},40);
 });
-document.getElementById('randomSeedBtn').onclick=()=>{document.getElementById('seedInput').value=Math.floor(Math.random()*999999);};
-document.getElementById('exportBtn').onclick=()=>{const a=document.createElement('a');a.download='realmforge.png';a.href=canvas.toDataURL('image/png');a.click();};
+document.getElementById('rngBtn').onclick=()=>{document.getElementById('seedInput').value=Math.floor(Math.random()*999999);};
+document.getElementById('saveBtn').onclick=()=>{const a=document.createElement('a');a.download='realmforge.png';a.href=canvas.toDataURL('image/png');a.click();};
 </script>
 </body>
 </html>
