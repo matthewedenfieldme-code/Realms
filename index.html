@@ -3,325 +3,512 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Realm Forge — Fantasy Map Generator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+  <title>Realm Forge — Hex Map Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
-      --parchment:#f4e4c1;--parchment-dark:#e8d5a3;--parchment-darker:#d4b896;
-      --ink:#2c1810;--ink-soft:#4a2e1a;--ink-muted:#7a5c3a;--ink-faded:#a08060;
-      --accent:#8b2020;--accent-gold:#c8962a;--shadow:rgba(44,24,16,0.3);
+      --bg:#1a1f2e;--panel:#22293a;--panel2:#2a3347;--border:#3a4560;
+      --text:#d4c8a0;--text-soft:#8a9ab8;--text-muted:#4a5570;
+      --accent:#e8b84b;--accent2:#6ab04c;--btn:#3a5090;--btn-hover:#4a60a8;
+      --shadow:rgba(0,0,0,0.5);
     }
-    body{font-family:'Crimson Text',serif;background:#1a0e08;color:var(--ink);min-height:100vh;overflow-x:hidden;}
-    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,#2a1508 0%,#0d0604 100%);z-index:0;}
-    .page{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:20px 12px 48px;}
-    header{text-align:center;margin-bottom:20px;animation:fadeDown 0.8s ease both;}
-    .site-title{font-family:'Cinzel',serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:700;color:var(--accent-gold);text-shadow:2px 2px 0 #2c1810,0 0 40px rgba(200,150,42,0.3);letter-spacing:0.06em;}
-    .site-sub{font-style:italic;font-size:0.95rem;color:var(--ink-faded);margin-top:4px;letter-spacing:0.1em;}
-    .divider{display:flex;align-items:center;gap:10px;margin:10px auto;max-width:360px;}
-    .divider-line{flex:1;height:1px;background:linear-gradient(to right,transparent,var(--accent-gold),transparent);}
-    .divider-icon{color:var(--accent-gold);}
-    .main-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start;}
-    @media(max-width:720px){.main-layout{grid-template-columns:1fr;}}
-    .controls-panel{background:var(--parchment);border:2px solid var(--parchment-darker);border-radius:4px;padding:16px 14px;box-shadow:4px 4px 16px var(--shadow);position:relative;animation:fadeUp 0.8s 0.1s ease both;max-height:92vh;overflow-y:auto;}
-    .controls-panel::before{content:'';position:absolute;inset:4px;border:1px solid var(--parchment-darker);border-radius:2px;pointer-events:none;opacity:0.4;}
-    .panel-title{font-family:'Cinzel',serif;font-size:0.82rem;font-weight:600;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;text-align:center;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--parchment-darker);}
-    .control-group{margin-bottom:12px;}
-    .control-label{font-family:'Cinzel',serif;font-size:0.68rem;font-weight:600;color:var(--ink-soft);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;display:block;}
-    select{width:100%;padding:7px 28px 7px 9px;font-family:'Crimson Text',serif;font-size:0.92rem;color:var(--ink);background:var(--parchment-dark);border:1px solid var(--parchment-darker);border-radius:2px;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a2e1a'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;transition:border-color 0.2s;}
-    select:focus{border-color:var(--accent-gold);}
-    .seed-row{display:flex;gap:5px;}
-    .seed-input{flex:1;padding:7px 9px;font-family:'Crimson Text',serif;font-size:0.92rem;color:var(--ink);background:var(--parchment-dark);border:1px solid var(--parchment-darker);border-radius:2px;outline:none;}
-    .seed-input:focus{border-color:var(--accent-gold);}
-    .icon-btn{padding:7px 10px;background:var(--parchment-darker);border:1px solid var(--ink-faded);border-radius:2px;cursor:pointer;font-size:0.9rem;color:var(--ink-soft);transition:background 0.2s;}
-    .icon-btn:hover{background:var(--accent-gold);color:var(--ink);}
-    .generate-btn{width:100%;margin-top:14px;padding:13px;background:var(--accent);color:var(--parchment);border:2px solid #5a1010;border-radius:3px;font-family:'Cinzel',serif;font-size:0.95rem;font-weight:600;letter-spacing:0.1em;cursor:pointer;transition:background 0.2s,transform 0.1s;box-shadow:2px 2px 8px var(--shadow);text-transform:uppercase;}
-    .generate-btn:hover{background:#a02828;}.generate-btn:active{transform:scale(0.98);}
-    .export-btn{width:100%;margin-top:7px;padding:9px;background:transparent;color:var(--ink-soft);border:1px solid var(--parchment-darker);border-radius:3px;font-family:'Cinzel',serif;font-size:0.75rem;font-weight:600;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
-    .export-btn:hover{background:var(--parchment-darker);color:var(--ink);}
-    .section-divider{border:none;border-top:1px solid var(--parchment-darker);margin:10px 0;}
-    .town-list{max-height:150px;overflow-y:auto;margin-top:5px;}
-    .town-item{display:flex;align-items:center;gap:5px;margin-bottom:5px;}
-    .town-item input{flex:1;padding:4px 7px;font-family:'Crimson Text',serif;font-size:0.88rem;color:var(--ink);background:var(--parchment-dark);border:1px solid var(--parchment-darker);border-radius:2px;outline:none;}
-    .town-item input:focus{border-color:var(--accent-gold);}
-    .town-dot{width:9px;height:9px;background:var(--ink);flex-shrink:0;border-radius:50%;}
-    .town-dot.city{border-radius:0;}
-    .map-wrap{animation:fadeUp 0.8s 0.2s ease both;}
-    .map-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
-    .zoom-btn{padding:7px 13px;background:rgba(244,228,193,0.1);border:1px solid rgba(200,150,42,0.28);border-radius:3px;color:var(--accent-gold);font-family:'Cinzel',serif;font-size:0.8rem;cursor:pointer;transition:background 0.2s;}
-    .zoom-btn:hover{background:rgba(200,150,42,0.2);}
-    .zoom-label{font-family:'Cinzel',serif;font-size:0.76rem;color:var(--ink-faded);min-width:46px;text-align:center;}
-    .map-container{background:var(--parchment);border:3px solid var(--parchment-darker);border-radius:4px;box-shadow:6px 6px 24px var(--shadow);position:relative;overflow:hidden;cursor:crosshair;}
-    .map-container::before{content:'';position:absolute;inset:6px;border:1px solid var(--parchment-darker);pointer-events:none;z-index:10;opacity:0.45;}
-    #mapCanvas{display:block;transform-origin:top left;}
-    .map-compass{position:absolute;top:16px;right:16px;z-index:20;font-size:1.9rem;color:var(--ink-soft);opacity:0.6;pointer-events:none;text-shadow:1px 1px 0 var(--parchment);user-select:none;}
-    .map-title-overlay{position:absolute;top:13px;left:0;right:0;text-align:center;z-index:20;pointer-events:none;}
-    .map-title-text{font-family:'Cinzel',serif;font-size:clamp(0.82rem,2vw,1.15rem);font-weight:700;color:var(--ink);text-shadow:1px 1px 0 var(--parchment);letter-spacing:0.08em;}
-    .map-legend{position:absolute;bottom:14px;right:14px;background:rgba(244,228,193,0.94);border:1px solid var(--parchment-darker);padding:8px 10px;border-radius:2px;z-index:20;min-width:95px;}
-    .legend-title{font-family:'Cinzel',serif;font-size:0.6rem;font-weight:600;color:var(--ink-soft);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;text-align:center;}
-    .legend-item{display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--ink-soft);margin-bottom:2px;font-family:'Crimson Text',serif;}
-    .legend-swatch{width:13px;height:13px;border-radius:2px;border:1px solid rgba(44,24,16,0.15);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;}
-    .map-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-faded);text-align:center;padding:40px;}
-    .map-empty-icon{font-size:3rem;margin-bottom:12px;opacity:0.38;}
-    .map-empty-text{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:0.06em;opacity:0.6;}
-    .map-empty-sub{font-style:italic;font-size:0.83rem;margin-top:5px;opacity:0.42;}
-    .info-bar{margin-top:8px;padding:7px 12px;background:rgba(244,228,193,0.09);border:1px solid rgba(200,150,42,0.16);border-radius:3px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;}
-    .info-text{font-style:italic;font-size:0.8rem;color:var(--ink-faded);}
-    .seed-display{font-size:0.76rem;color:var(--ink-faded);}
-    .rename-tooltip{position:absolute;z-index:50;background:var(--parchment);border:1.5px solid var(--accent-gold);border-radius:3px;padding:6px 8px;box-shadow:2px 2px 10px var(--shadow);display:none;flex-direction:column;gap:5px;min-width:155px;}
-    .rename-tooltip input{padding:5px 7px;font-family:'Crimson Text',serif;font-size:0.9rem;color:var(--ink);background:var(--parchment-dark);border:1px solid var(--parchment-darker);border-radius:2px;outline:none;width:100%;}
-    .rename-tooltip input:focus{border-color:var(--accent-gold);}
+    body{font-family:'Open Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow:hidden;}
+    .app{display:grid;grid-template-columns:260px 1fr;grid-template-rows:48px 1fr;height:100vh;}
+
+    /* Top bar */
+    .topbar{grid-column:1/-1;background:#111827;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:16px;z-index:100;}
+    .topbar-title{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--accent);letter-spacing:0.06em;}
+    .topbar-subtitle{font-size:0.72rem;color:var(--text-soft);letter-spacing:0.08em;}
+    .topbar-spacer{flex:1;}
+    .topbar-seed{font-size:0.72rem;color:var(--text-muted);font-family:monospace;}
+
+    /* Side panel */
+    .sidepanel{background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:10px;}
+    .section-title{font-family:'Cinzel',serif;font-size:0.68rem;font-weight:600;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;padding-bottom:5px;border-bottom:1px solid var(--border);}
+    .control-group{display:flex;flex-direction:column;gap:3px;}
+    .control-label{font-size:0.68rem;color:var(--text-soft);letter-spacing:0.06em;text-transform:uppercase;}
+    select{width:100%;padding:6px 8px;font-family:'Open Sans',sans-serif;font-size:0.82rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:3px;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a9ab8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;}
+    select:focus{border-color:var(--accent);}
+    select option{background:#22293a;}
+    .seed-row{display:flex;gap:4px;}
+    .seed-input{flex:1;padding:6px 8px;font-family:monospace;font-size:0.82rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:3px;outline:none;}
+    .seed-input:focus{border-color:var(--accent);}
+    .icon-btn{padding:6px 9px;background:var(--panel2);border:1px solid var(--border);border-radius:3px;cursor:pointer;font-size:0.85rem;color:var(--text-soft);transition:all 0.15s;}
+    .icon-btn:hover{background:var(--btn);color:var(--text);}
+    .forge-btn{width:100%;padding:11px;background:var(--btn);color:var(--accent);border:1px solid var(--accent);border-radius:4px;font-family:'Cinzel',serif;font-size:0.88rem;font-weight:600;letter-spacing:0.08em;cursor:pointer;transition:all 0.15s;text-transform:uppercase;}
+    .forge-btn:hover{background:var(--btn-hover);}
+    .forge-btn:active{transform:scale(0.98);}
+    .export-btn{width:100%;padding:7px;background:transparent;color:var(--text-soft);border:1px solid var(--border);border-radius:4px;font-family:'Open Sans',sans-serif;font-size:0.75rem;cursor:pointer;transition:all 0.15s;}
+    .export-btn:hover{background:var(--panel2);color:var(--text);}
+    .divider{border:none;border-top:1px solid var(--border);}
+    .town-list{max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;}
+    .town-item{display:flex;align-items:center;gap:5px;}
+    .town-dot{width:8px;height:8px;background:var(--accent);flex-shrink:0;border-radius:50%;}
+    .town-dot.city{border-radius:0;background:#e85555;}
+    .town-item input{flex:1;padding:3px 6px;font-family:'Open Sans',sans-serif;font-size:0.8rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:2px;outline:none;}
+    .town-item input:focus{border-color:var(--accent);}
+
+    /* Legend */
+    .legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+    .legend-item{display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--text-soft);}
+    .legend-swatch{width:14px;height:12px;border-radius:2px;flex-shrink:0;border:1px solid rgba(255,255,255,0.1);}
+
+    /* Map area */
+    .map-area{position:relative;overflow:hidden;background:#0d1117;cursor:grab;}
+    .map-area:active{cursor:grabbing;}
+    #mapCanvas{position:absolute;top:0;left:0;}
+
+    /* Map toolbar overlay */
+    .map-toolbar{position:absolute;bottom:16px;right:16px;z-index:50;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+    .zoom-group{display:flex;gap:4px;background:rgba(17,24,39,0.85);border:1px solid var(--border);border-radius:4px;padding:4px;}
+    .zoom-btn{padding:5px 10px;background:transparent;border:none;color:var(--text-soft);font-size:1rem;cursor:pointer;border-radius:3px;transition:all 0.15s;font-weight:600;}
+    .zoom-btn:hover{background:var(--panel2);color:var(--accent);}
+    .zoom-label{font-size:0.72rem;color:var(--text-muted);padding:5px 6px;font-family:monospace;}
+
+    /* Empty state */
+    .map-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-muted);text-align:center;gap:12px;pointer-events:none;}
+    .map-empty-icon{font-size:4rem;opacity:0.3;}
+    .map-empty-text{font-family:'Cinzel',serif;font-size:1.1rem;letter-spacing:0.06em;opacity:0.5;}
+    .map-empty-sub{font-size:0.82rem;opacity:0.3;}
+
+    /* Rename tooltip */
+    .rename-tooltip{position:absolute;z-index:200;background:var(--panel);border:1px solid var(--accent);border-radius:4px;padding:8px;box-shadow:0 4px 16px var(--shadow);display:none;flex-direction:column;gap:5px;min-width:160px;}
+    .rename-tooltip input{padding:5px 7px;font-family:'Open Sans',sans-serif;font-size:0.85rem;color:var(--text);background:var(--panel2);border:1px solid var(--border);border-radius:2px;outline:none;width:100%;}
+    .rename-tooltip input:focus{border-color:var(--accent);}
     .rename-btns{display:flex;gap:4px;}
-    .rename-ok{flex:1;padding:4px;background:var(--accent);color:var(--parchment);border:none;border-radius:2px;font-family:'Cinzel',serif;font-size:0.68rem;cursor:pointer;}
-    .rename-cancel{flex:1;padding:4px;background:var(--parchment-darker);color:var(--ink);border:none;border-radius:2px;font-family:'Cinzel',serif;font-size:0.68rem;cursor:pointer;}
-    @keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-    ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--parchment-dark);}::-webkit-scrollbar-thumb{background:var(--parchment-darker);border-radius:3px;}
+    .rename-ok{flex:1;padding:4px;background:var(--btn);color:var(--accent);border:1px solid var(--accent);border-radius:2px;font-size:0.72rem;cursor:pointer;}
+    .rename-cancel{flex:1;padding:4px;background:var(--panel2);color:var(--text-soft);border:1px solid var(--border);border-radius:2px;font-size:0.72rem;cursor:pointer;}
+
+    /* Map title */
+    .map-title-bar{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:50;background:rgba(17,24,39,0.82);border:1px solid var(--border);border-radius:4px;padding:5px 18px;pointer-events:none;}
+    .map-title-text{font-family:'Cinzel',serif;font-size:0.95rem;font-weight:600;color:var(--accent);letter-spacing:0.08em;}
+
+    ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:var(--panel);}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+    @media(max-width:640px){.app{grid-template-columns:1fr;grid-template-rows:48px auto 1fr;}.sidepanel{max-height:40vh;}}
   </style>
 </head>
 <body>
-<div class="page">
-  <header>
-    <div class="site-title">⚔ Realm Forge ⚔</div>
-    <div class="divider"><div class="divider-line"></div><div class="divider-icon">✦</div><div class="divider-line"></div></div>
-    <div class="site-sub">Fantasy Map Generator for TTRPGs &amp; World Building</div>
-  </header>
-  <div class="main-layout">
-    <div class="controls-panel">
-      <div class="panel-title">⚙ Map Parameters</div>
-      <div class="control-group"><label class="control-label">🗺 Map Size</label>
-        <select id="mapSize">
-          <option value="small">Small — Dungeon / Town</option>
-          <option value="medium" selected>Medium — Region / Province</option>
-          <option value="large">Large — Full Continent</option>
-        </select></div>
-      <div class="control-group"><label class="control-label">🌍 Land Mass Shape</label>
-        <select id="landType">
-          <option value="continent">Continent</option><option value="island">Island</option>
-          <option value="archipelago">Archipelago</option><option value="peninsula">Peninsula</option>
-          <option value="inland">Inland Region</option><option value="coastal">Coastal Region</option>
-          <option value="atoll">Atoll</option><option value="fjord">Fjord Coast</option>
-          <option value="delta">River Delta</option><option value="random">Random</option>
-        </select></div>
-      <div class="control-group"><label class="control-label">⛰ Primary Terrain</label>
-        <select id="terrain">
-          <option value="mixed">Mixed Terrain</option><option value="forest">Dense Forest</option>
-          <option value="mountains">Mountain Range</option><option value="desert">Arid Desert</option>
-          <option value="plains">Rolling Plains</option><option value="tundra">Frozen Tundra</option>
-          <option value="swamp">Swampland</option><option value="volcanic">Volcanic Wastes</option>
-          <option value="jungle">Jungle / Rainforest</option><option value="savanna">Savanna</option>
-          <option value="tidal">Tidal Flats</option>
-        </select></div>
-      <div class="control-group"><label class="control-label">💧 Water Bodies</label>
-        <select id="water">
-          <option value="moderate">Moderate — Rivers &amp; Lakes</option>
-          <option value="abundant">Abundant — Many Waterways</option>
-          <option value="coastal">Coastal — Ocean Borders</option>
-          <option value="rivers">Rivers Only</option><option value="lakes">Lakes &amp; Ponds Only</option>
-          <option value="arid">Arid — Minimal Water</option>
-          <option value="archipelago">Archipelago — Many Seas</option>
-        </select></div>
-      <div class="control-group"><label class="control-label">🏘 Settlements</label>
-        <select id="settlements">
-          <option value="none">None — Untamed Wild</option><option value="few">Few — Wilderness</option>
-          <option value="moderate" selected>Moderate — Settled Land</option>
-          <option value="many">Many — Civilized Region</option>
-        </select></div>
-      <div class="control-group"><label class="control-label">🌤 Climate</label>
-        <select id="climate">
-          <option value="temperate">Temperate</option><option value="tropical">Tropical</option>
-          <option value="arctic">Arctic / Frozen</option><option value="arid">Arid / Dry</option>
-          <option value="stormy">Stormy / Turbulent</option><option value="magical">Magical / Unnatural</option>
-        </select></div>
-      <div class="control-group"><label class="control-label">⚔ Era / Age</label>
-        <select id="era">
-          <option value="medieval">Medieval Fantasy</option><option value="ancient">Ancient / Mythic</option>
-          <option value="dark">Dark Ages</option><option value="renaissance">Renaissance</option>
-          <option value="apocalyptic">Post-Apocalyptic</option><option value="magitech">Magitech / Arcane</option>
-        </select></div>
-      <div class="control-group"><label class="control-label">🎲 Map Seed</label>
-        <div class="seed-row">
-          <input type="text" class="seed-input" id="seedInput" placeholder="e.g. 42069"/>
-          <button class="icon-btn" id="randomSeedBtn">🎲</button>
-        </div></div>
-      <button class="generate-btn" id="generateBtn">⚔ Forge Realm</button>
-      <button class="export-btn" id="exportBtn">↓ Save as Image</button>
-      <hr class="section-divider"/>
-      <div class="control-group"><label class="control-label">✏ Edit Settlement Names</label>
-        <div class="town-list" id="townList">
-          <div style="font-style:italic;font-size:0.8rem;color:var(--ink-faded);text-align:center;padding:8px;">Generate a map first</div>
-        </div></div>
+<div class="app">
+  <!-- Top bar -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">⚔ REALM FORGE</div>
     </div>
-    <div class="map-wrap">
-      <div class="map-toolbar">
-        <button class="zoom-btn" id="zoomIn">＋ Zoom In</button>
-        <button class="zoom-btn" id="zoomOut">－ Zoom Out</button>
-        <button class="zoom-btn" id="zoomReset">↺ Reset</button>
+    <div class="topbar-subtitle">HEX MAP GENERATOR · TTRPG WORLD BUILDER</div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-seed" id="topSeed"></div>
+  </div>
+
+  <!-- Side panel -->
+  <div class="sidepanel">
+    <div class="section-title">Map Parameters</div>
+
+    <div class="control-group">
+      <div class="control-label">Map Size</div>
+      <select id="mapSize">
+        <option value="small">Small (30×22)</option>
+        <option value="medium" selected>Medium (48×34)</option>
+        <option value="large">Large (64×46)</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <div class="control-label">Land Shape</div>
+      <select id="landType">
+        <option value="continent">Continent</option>
+        <option value="island">Island</option>
+        <option value="archipelago">Archipelago</option>
+        <option value="peninsula">Peninsula</option>
+        <option value="inland">Inland Region</option>
+        <option value="atoll">Atoll</option>
+        <option value="fjord">Fjord Coast</option>
+        <option value="delta">River Delta</option>
+        <option value="random">Random</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <div class="control-label">Primary Terrain</div>
+      <select id="terrain">
+        <option value="mixed">Mixed</option>
+        <option value="forest">Forest</option>
+        <option value="mountains">Mountains</option>
+        <option value="desert">Desert</option>
+        <option value="plains">Plains</option>
+        <option value="tundra">Tundra</option>
+        <option value="swamp">Swamp</option>
+        <option value="jungle">Jungle</option>
+        <option value="savanna">Savanna</option>
+        <option value="volcanic">Volcanic</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <div class="control-label">Water Bodies</div>
+      <select id="water">
+        <option value="moderate">Moderate</option>
+        <option value="abundant">Abundant</option>
+        <option value="coastal">Coastal</option>
+        <option value="rivers">Rivers Only</option>
+        <option value="lakes">Lakes Only</option>
+        <option value="arid">Arid — Minimal</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <div class="control-label">Settlements</div>
+      <select id="settlements">
+        <option value="none">None</option>
+        <option value="few">Few</option>
+        <option value="moderate" selected>Moderate</option>
+        <option value="many">Many</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <div class="control-label">Era / Age</div>
+      <select id="era">
+        <option value="medieval">Medieval Fantasy</option>
+        <option value="ancient">Ancient / Mythic</option>
+        <option value="dark">Dark Ages</option>
+        <option value="apocalyptic">Post-Apocalyptic</option>
+        <option value="magitech">Magitech / Arcane</option>
+      </select>
+    </div>
+
+    <div class="control-group">
+      <div class="control-label">Map Seed</div>
+      <div class="seed-row">
+        <input type="text" class="seed-input" id="seedInput" placeholder="e.g. 42069"/>
+        <button class="icon-btn" id="randomSeedBtn">🎲</button>
+      </div>
+    </div>
+
+    <button class="forge-btn" id="generateBtn">⚔ FORGE REALM</button>
+    <button class="export-btn" id="exportBtn">↓ Save as PNG</button>
+
+    <hr class="divider"/>
+
+    <div class="section-title">Legend</div>
+    <div class="legend-grid" id="legendGrid"></div>
+
+    <hr class="divider"/>
+
+    <div class="section-title">Edit Settlements</div>
+    <div class="town-list" id="townList">
+      <div style="font-size:0.75rem;color:var(--text-muted);text-align:center;padding:6px;">Generate a map first</div>
+    </div>
+  </div>
+
+  <!-- Map area -->
+  <div class="map-area" id="mapArea">
+    <canvas id="mapCanvas"></canvas>
+    <div class="map-empty" id="mapEmpty">
+      <div class="map-empty-icon">🗺</div>
+      <div class="map-empty-text">Your Realm Awaits</div>
+      <div class="map-empty-sub">Configure parameters and forge a world</div>
+    </div>
+    <div class="map-title-bar" id="mapTitleBar" style="display:none">
+      <div class="map-title-text" id="mapTitleText"></div>
+    </div>
+    <div class="map-toolbar">
+      <div class="zoom-group">
+        <button class="zoom-btn" id="zoomIn">+</button>
         <span class="zoom-label" id="zoomLabel">100%</span>
-        <span style="font-family:'Crimson Text',serif;font-style:italic;font-size:0.78rem;color:var(--ink-faded);">Tap a settlement to rename</span>
+        <button class="zoom-btn" id="zoomOut">−</button>
+        <button class="zoom-btn" id="zoomReset" style="font-size:0.7rem;padding:5px 7px;">⟳</button>
       </div>
-      <div class="map-container" id="mapContainer">
-        <canvas id="mapCanvas"></canvas>
-        <div class="map-empty" id="mapEmpty">
-          <div class="map-empty-icon">🗺</div>
-          <div class="map-empty-text">Your realm awaits</div>
-          <div class="map-empty-sub">Set your parameters and forge a world</div>
-        </div>
-        <div class="map-compass" id="mapCompass" style="display:none">🧭</div>
-        <div class="map-title-overlay" id="mapTitleOverlay" style="display:none">
-          <div class="map-title-text" id="mapTitleText"></div>
-        </div>
-        <div class="map-legend" id="mapLegend" style="display:none">
-          <div class="legend-title">Legend</div>
-          <div id="legendItems"></div>
-        </div>
-        <div class="rename-tooltip" id="renameTooltip">
-          <input type="text" id="renameInput" placeholder="New name…"/>
-          <div class="rename-btns">
-            <button class="rename-ok" id="renameOk">✓ Rename</button>
-            <button class="rename-cancel" id="renameCancel">✕</button>
-          </div>
-        </div>
-      </div>
-      <div class="info-bar">
-        <div class="info-text" id="infoText">Choose your parameters and forge a world.</div>
-        <div class="seed-display" id="seedDisplay"></div>
+    </div>
+    <div class="rename-tooltip" id="renameTooltip">
+      <input type="text" id="renameInput" placeholder="Settlement name…"/>
+      <div class="rename-btns">
+        <button class="rename-ok" id="renameOk">✓ OK</button>
+        <button class="rename-cancel" id="renameCancel">✕</button>
       </div>
     </div>
   </div>
 </div>
+
 <script>
-function createRNG(seed){let s=seed>>>0;return function(){s+=0x6D2B79F5;let t=Math.imul(s^s>>>15,1|s);t^=t+Math.imul(t^t>>>7,61|t);return((t^t>>>14)>>>0)/4294967296;};}
-function makeNoise(rng,w,h){const g=[];for(let y=0;y<h;y++){g[y]=[];for(let x=0;x<w;x++)g[y][x]=rng();}function lerp(a,b,t){return a+(b-a)*t;}function sm(t){return t*t*(3-2*t);}return function(x,y){const xi=Math.floor(x)%w,yi=Math.floor(y)%h,xf=x-Math.floor(x),yf=y-Math.floor(y),x1=(xi+1)%w,y1=(yi+1)%h;return lerp(lerp(g[yi][xi],g[yi][x1],sm(xf)),lerp(g[y1][xi],g[y1][x1],sm(xf)),sm(yf));};}
-function fbm(n,x,y,o=5){let v=0,a=0.5,f=1,m=0;for(let i=0;i<o;i++){v+=n(x*f,y*f)*a;m+=a;a*=0.5;f*=2;}return v/m;}
+// ── RNG ──────────────────────────────────────────────────────────────────────
+function createRNG(seed){let s=seed>>>0;return()=>{s+=0x6D2B79F5;let t=Math.imul(s^s>>>15,1|s);t^=t+Math.imul(t^t>>>7,61|t);return((t^t>>>14)>>>0)/4294967296;};}
 function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i)|0;return Math.abs(h);}
 
-const PRE=['Aether','Brim','Cael','Drak','Eld','Fae','Grim','Helm','Iron','Jade','Kael','Lorn','Mor','Neth','Orm','Pyre','Quel','Raven','Stone','Thorn','Ul','Vale','Wych','Xan','Yor','Zeph','Ash','Black','Cold','Dawn','Ever','Frost','Gold','High','King','Lake','Mist','Night','Oak','Pine'];
-const SUF=['haven','moor','fell','reach','hold','gate','shire','mere','wald','dun','heim','keep','vale','ford','mark','fen','spire','watch','crest','deep','brook','cliff','dale','edge','field','glen','grove','hill','knoll','lake','marsh','peak','ridge','rock','run','side','stead','tor','way','wood'];
-const TOWNS=['Ashford','Brackwater','Coldmere','Dusthaven','Elderwick','Frostgate','Grimhold','Harrowfen','Ironspire','Jadekeep','Kaldrath','Lornswick','Mirefall','Nethgate','Oldwatch','Pyremont','Quelford','Ravenstone','Stonegate','Thornwick','Ulvenmoor','Valeford','Wychwood','Xandrel','Yorkstead','Zephyrhold','Ashwick','Blackmere','Cresthold','Dustwick','Embervale','Frostwick','Goldfen','Highkeep','Irondale','Jadewood','Keldmoor','Lorndell','Mirehaven','Netherford'];
-const RUINS=['The Shattered Keep','Tomb of Aelvar','Ruins of Drakmore','The Sunken Temple','Cradle of Shadows','Void Citadel','The Forgotten Spire','Necropolis of Grim','The Broken Gate','Obelisk of Xan'];
-const CASTLES=['Ironhold Fortress','Drakenmoor Castle','High Aerie Keep','Stormwatch Citadel','Embercrown Bastion','Thornwall Castle','Voidstone Keep','Goldspire Tower','Nightwatch Fortress','Bleakwall Stronghold'];
+// ── Noise ────────────────────────────────────────────────────────────────────
+function makeNoise(rng,w,h){
+  const g=[];for(let y=0;y<h;y++){g[y]=[];for(let x=0;x<w;x++)g[y][x]=rng();}
+  const lerp=(a,b,t)=>a+(b-a)*t,sm=t=>t*t*(3-2*t);
+  return(x,y)=>{const xi=Math.floor(x)%w,yi=Math.floor(y)%h,xf=x-Math.floor(x),yf=y-Math.floor(y),x1=(xi+1)%w,y1=(yi+1)%h;return lerp(lerp(g[yi][xi],g[yi][x1],sm(xf)),lerp(g[y1][xi],g[y1][x1],sm(xf)),sm(yf));};
+}
+function fbm(n,x,y,o=5){let v=0,a=0.5,f=1,m=0;for(let i=0;i<o;i++){v+=n(x*f,y*f)*a;m+=a;a*=0.5;f*=2;}return v/m;}
 
-const canvas=document.getElementById('mapCanvas'),ctx=canvas.getContext('2d');
-const SIZES={small:{w:600,h:450},medium:{w:800,h:600},large:{w:1000,h:750}};
-let zoom=1,settlements=[],lastSizeKey='medium',baseImg=null,renamingIdx=-1;
+// ── Hex math ─────────────────────────────────────────────────────────────────
+// Flat-top hexagons like Civ 5
+function hexToPixel(col,row,size){
+  const x=size*1.5*col;
+  const y=size*Math.sqrt(3)*(row+(col%2)*0.5);
+  return{x,y};
+}
+function hexCorner(cx,cy,size,i){
+  const deg=60*i;const rad=Math.PI/180*deg;
+  return{x:cx+size*Math.cos(rad),y:cy+size*Math.sin(rad)};
+}
 
-function applyZoom(){
+// ── Tile types and colors ─────────────────────────────────────────────────────
+const TILE={
+  DEEP_OCEAN:  {fill:'#1a3a5c',stroke:'#1e4470',label:'Deep Ocean'},
+  OCEAN:       {fill:'#1e4d7a',stroke:'#235890',label:'Ocean'},
+  COAST:       {fill:'#2a6a9e',stroke:'#3080b8',label:'Coast'},
+  PLAINS:      {fill:'#8aae3a',stroke:'#9abe4a',label:'Plains'},
+  GRASSLAND:   {fill:'#4a8a2a',stroke:'#5a9e32',label:'Grassland'},
+  FOREST:      {fill:'#2a6a22',stroke:'#348028',label:'Forest'},
+  JUNGLE:      {fill:'#1a5a18',stroke:'#227020',label:'Jungle'},
+  HILLS:       {fill:'#a87a40',stroke:'#be8e50',label:'Hills'},
+  MOUNTAINS:   {fill:'#8a7a6a',stroke:'#9e8e7a',label:'Mountains'},
+  SNOW_PEAK:   {fill:'#d8d8e8',stroke:'#e8e8f0',label:'Snow Peak'},
+  DESERT:      {fill:'#d4b86a',stroke:'#e0c878',label:'Desert'},
+  TUNDRA:      {fill:'#8ab0a0',stroke:'#9ec0b0',label:'Tundra'},
+  SNOW:        {fill:'#c8d8d0',stroke:'#d8e8e0',label:'Snow'},
+  SWAMP:       {fill:'#3a5a30',stroke:'#4a6e3c',label:'Swamp'},
+  VOLCANIC:    {fill:'#5a2a18',stroke:'#6e3820',label:'Volcanic'},
+  LAVA:        {fill:'#c83010',stroke:'#e03820',label:'Lava'},
+  SAVANNA:     {fill:'#c8a03a',stroke:'#d8b048',label:'Savanna'},
+  RIVER:       {fill:'#2a7ab0',stroke:'#3090cc',label:'River'},
+  LAKE:        {fill:'#2060a0',stroke:'#2878b8',label:'Lake'},
+};
+
+// ── Names ────────────────────────────────────────────────────────────────────
+const PRE=['Aether','Brim','Cael','Drak','Eld','Fae','Grim','Helm','Iron','Jade','Kael','Lorn','Mor','Neth','Orm','Pyre','Quel','Raven','Stone','Thorn','Val','Wych','Xan','Yor','Zeph','Ash','Black','Cold','Dawn','Frost','Gold','High','Mist','Night','Oak','Silver'];
+const SUF=['haven','moor','fell','reach','hold','gate','shire','mere','dun','heim','keep','vale','ford','mark','fen','spire','watch','crest','brook','dale','field','glen','grove','hill','marsh','peak','ridge','rock','stead','tor','wood'];
+const TOWNS=['Ashford','Brackwater','Coldmere','Dusthaven','Elderwick','Frostgate','Grimhold','Harrowfen','Ironspire','Jadekeep','Kaldrath','Lornswick','Mirefall','Nethgate','Oldwatch','Pyremont','Quelford','Ravenstone','Stonegate','Thornwick','Ulvenmoor','Valeford','Wychwood','Xandrel','Yorkstead','Zephyrhold','Embervale','Frostwick','Goldfen','Highkeep','Irondale','Jadewood','Keldmoor','Lorndell','Mirehaven','Netherford','Ashwick','Blackmere','Cresthold','Dustwick'];
+const RUINS=['Shattered Keep','Tomb of Aelvar','Drakmore Ruins','Sunken Temple','Shadow Cradle','Void Citadel','Forgotten Spire','Grim Necropolis','Broken Gate','Xan Obelisk'];
+const CASTLES=['Ironhold','Drakenmoor','High Aerie','Stormwatch','Embercrown','Thornwall','Voidstone','Goldspire','Nightwatch','Bleakwall'];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const canvas=document.getElementById('mapCanvas');
+const ctx=canvas.getContext('2d');
+const mapArea=document.getElementById('mapArea');
+let hexGrid=[];let settlements=[];let mapCols=0;let mapRows=0;let hexSize=22;
+let offsetX=0,offsetY=0,zoom=1;
+let isDragging=false,dragStartX=0,dragStartY=0,dragOffsetX=0,dragOffsetY=0;
+let renamingIdx=-1;
+const SIZES={small:{cols:30,rows:22},medium:{cols:48,rows:34},large:{cols:64,rows:46}};
+
+// ── Pan & zoom ────────────────────────────────────────────────────────────────
+mapArea.addEventListener('mousedown',e=>{
+  if(e.button!==0)return;
+  const tt=document.getElementById('renameTooltip');
+  if(tt.style.display==='flex'){tt.style.display='none';return;}
+  isDragging=true;dragStartX=e.clientX;dragStartY=e.clientY;
+  dragOffsetX=offsetX;dragOffsetY=offsetY;
+});
+mapArea.addEventListener('mousemove',e=>{
+  if(!isDragging)return;
+  offsetX=dragOffsetX+(e.clientX-dragStartX);
+  offsetY=dragOffsetY+(e.clientY-dragStartY);
+  positionCanvas();
+});
+mapArea.addEventListener('mouseup',e=>{
+  if(!isDragging)return;
+  const moved=Math.abs(e.clientX-dragStartX)+Math.abs(e.clientY-dragStartY);
+  isDragging=false;
+  if(moved<5) handleMapClick(e);
+});
+mapArea.addEventListener('mouseleave',()=>{isDragging=false;});
+
+// Touch support
+let touchStartX=0,touchStartY=0,touchOffX=0,touchOffY=0;
+mapArea.addEventListener('touchstart',e=>{
+  if(e.touches.length===1){touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY;touchOffX=offsetX;touchOffY=offsetY;}
+},{passive:true});
+mapArea.addEventListener('touchmove',e=>{
+  if(e.touches.length===1){offsetX=touchOffX+(e.touches[0].clientX-touchStartX);offsetY=touchOffY+(e.touches[0].clientY-touchStartY);positionCanvas();}
+},{passive:true});
+
+// Scroll to zoom
+mapArea.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const delta=e.deltaY>0?-0.1:0.1;
+  zoom=Math.max(0.3,Math.min(3,+(zoom+delta).toFixed(2)));
+  updateZoom();
+},{passive:false});
+
+document.getElementById('zoomIn').onclick=()=>{zoom=Math.min(3,+(zoom+0.2).toFixed(2));updateZoom();};
+document.getElementById('zoomOut').onclick=()=>{zoom=Math.max(0.3,+(zoom-0.2).toFixed(2));updateZoom();};
+document.getElementById('zoomReset').onclick=()=>{zoom=1;centerMap();};
+
+function updateZoom(){
   canvas.style.transform=`scale(${zoom})`;
   canvas.style.transformOrigin='top left';
-  const sz=SIZES[lastSizeKey];
-  document.getElementById('mapContainer').style.height=(sz.h*zoom)+'px';
   document.getElementById('zoomLabel').textContent=Math.round(zoom*100)+'%';
 }
-document.getElementById('zoomIn').onclick=()=>{zoom=Math.min(3,+(zoom+0.25).toFixed(2));applyZoom();};
-document.getElementById('zoomOut').onclick=()=>{zoom=Math.max(0.25,+(zoom-0.25).toFixed(2));applyZoom();};
-document.getElementById('zoomReset').onclick=()=>{zoom=1;applyZoom();};
 
-const tooltip=document.getElementById('renameTooltip'),renameInput=document.getElementById('renameInput');
-document.getElementById('mapContainer').addEventListener('click',e=>{
-  if(tooltip.style.display==='flex'){tooltip.style.display='none';return;}
-  const rect=canvas.getBoundingClientRect();
-  const mx=(e.clientX-rect.left)/zoom,my=(e.clientY-rect.top)/zoom;
+function positionCanvas(){
+  canvas.style.left=offsetX+'px';
+  canvas.style.top=offsetY+'px';
+}
+
+function centerMap(){
+  const area=mapArea.getBoundingClientRect();
+  offsetX=Math.max(0,(area.width-canvas.width)/2);
+  offsetY=Math.max(0,(area.height-canvas.height)/2);
+  positionCanvas();updateZoom();
+}
+
+// ── Click to rename ───────────────────────────────────────────────────────────
+function handleMapClick(e){
+  if(!settlements.length)return;
+  const rect=mapArea.getBoundingClientRect();
+  const mx=(e.clientX-rect.left-offsetX)/zoom;
+  const my=(e.clientY-rect.top-offsetY)/zoom;
   for(let i=0;i<settlements.length;i++){
     const s=settlements[i];
-    if(Math.sqrt((s.x-mx)**2+(s.y-my)**2)<18){
-      renamingIdx=i;renameInput.value=s.name;
-      tooltip.style.display='flex';
-      tooltip.style.left=(s.x*zoom+10)+'px';
-      tooltip.style.top=(s.y*zoom-24)+'px';
-      renameInput.focus();return;
+    const dist=Math.sqrt((s.px-mx)**2+(s.py-my)**2);
+    if(dist<hexSize*1.5){
+      renamingIdx=i;
+      const tt=document.getElementById('renameTooltip');
+      document.getElementById('renameInput').value=s.name;
+      tt.style.display='flex';
+      tt.style.left=(s.px*zoom+offsetX+10)+'px';
+      tt.style.top=(s.py*zoom+offsetY-30)+'px';
+      document.getElementById('renameInput').focus();
+      return;
     }
   }
-});
-document.getElementById('renameOk').onclick=()=>{if(renamingIdx>=0){settlements[renamingIdx].name=renameInput.value;redraw();refreshList();}tooltip.style.display='none';};
-document.getElementById('renameCancel').onclick=()=>{tooltip.style.display='none';};
-renameInput.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('renameOk').click();});
+}
+document.getElementById('renameOk').onclick=()=>{
+  if(renamingIdx>=0){settlements[renamingIdx].name=document.getElementById('renameInput').value;renderMap();refreshTownList();}
+  document.getElementById('renameTooltip').style.display='none';
+};
+document.getElementById('renameCancel').onclick=()=>{document.getElementById('renameTooltip').style.display='none';};
+document.getElementById('renameInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('renameOk').click();});
 
-function refreshList(){
+// ── Town list ─────────────────────────────────────────────────────────────────
+function refreshTownList(){
   const list=document.getElementById('townList');
-  if(!settlements.length){list.innerHTML='<div style="font-style:italic;font-size:0.8rem;color:var(--ink-faded);text-align:center;padding:8px;">No settlements on map</div>';return;}
-  list.innerHTML=settlements.map((s,i)=>`<div class="town-item"><div class="town-dot ${s.isCity?'city':''}"></div><input type="text" value="${s.name}" data-idx="${i}" class="tni"/></div>`).join('');
-  list.querySelectorAll('.tni').forEach(inp=>inp.addEventListener('change',e=>{settlements[+e.target.dataset.idx].name=e.target.value;redraw();}));
+  if(!settlements.length){list.innerHTML='<div style="font-size:0.75rem;color:var(--text-muted);text-align:center;padding:6px;">No settlements</div>';return;}
+  list.innerHTML=settlements.map((s,i)=>`
+    <div class="town-item">
+      <div class="town-dot ${s.isCity?'city':''}"></div>
+      <input type="text" value="${s.name}" data-idx="${i}" class="tni"/>
+    </div>`).join('');
+  list.querySelectorAll('.tni').forEach(inp=>inp.addEventListener('change',e=>{settlements[+e.target.dataset.idx].name=e.target.value;renderMap();}));
 }
 
-function redraw(){
-  if(!baseImg)return;
-  ctx.putImageData(baseImg,0,0);
-  drawAllFeatures();
-  drawSettlements();
-}
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderMap(){
+  if(!hexGrid.length)return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-let featureFns=[];
-function drawAllFeatures(){featureFns.forEach(f=>f());}
+  // Ocean background
+  ctx.fillStyle='#0d1e2e';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-function drawSettlements(){
+  // Draw hexes
+  for(let row=0;row<mapRows;row++){
+    for(let col=0;col<mapCols;col++){
+      const tile=hexGrid[row][col];
+      if(!tile)continue;
+      const {x,y}=hexToPixel(col,row,hexSize);
+      const cx=x+hexSize,cy=y+hexSize*Math.sqrt(3)/2;
+      drawHex(cx,cy,hexSize,tile);
+    }
+  }
+
+  // Draw rivers (highlight certain coast/river tiles)
+  // Draw features
+  for(let row=0;row<mapRows;row++){
+    for(let col=0;col<mapCols;col++){
+      const tile=hexGrid[row][col];
+      if(!tile)continue;
+      const {x,y}=hexToPixel(col,row,hexSize);
+      const cx=x+hexSize,cy=y+hexSize*Math.sqrt(3)/2;
+      drawTileIcon(cx,cy,hexSize,tile);
+    }
+  }
+
+  // Draw roads between settlements
+  if(settlements.length>1){
+    ctx.strokeStyle='rgba(200,160,80,0.55)';ctx.lineWidth=2;ctx.setLineDash([5,4]);
+    for(let i=0;i<settlements.length-1;i++){
+      if(Math.random()>0.6)continue;
+      ctx.beginPath();ctx.moveTo(settlements[i].px,settlements[i].py);ctx.lineTo(settlements[i+1].px,settlements[i+1].py);ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  // Draw settlements
   settlements.forEach(s=>{
-    ctx.fillStyle='rgba(44,24,16,0.88)';ctx.strokeStyle='rgba(44,24,16,0.5)';
-    if(s.isCity){ctx.lineWidth=1.5;ctx.beginPath();ctx.rect(s.x-4,s.y-4,8,8);ctx.fill();ctx.stroke();}
-    else{ctx.beginPath();ctx.arc(s.x,s.y,3.5,0,Math.PI*2);ctx.fill();}
-    ctx.font=`${s.isCity?'bold ':''} ${s.isCity?10:8.5}px 'Crimson Text',serif`;
-    ctx.fillStyle='rgba(30,15,8,0.9)';ctx.textAlign='center';
-    ctx.fillText(s.name,s.x,s.y-(s.isCity?9:7));
+    const r=s.isCity?hexSize*0.5:hexSize*0.35;
+    // Outer ring
+    ctx.strokeStyle=s.isCity?'#e85555':'#e8b84b';
+    ctx.lineWidth=s.isCity?2.5:2;
+    ctx.fillStyle=s.isCity?'rgba(232,85,85,0.25)':'rgba(232,184,75,0.2)';
+    ctx.beginPath();ctx.arc(s.px,s.py,r,0,Math.PI*2);ctx.fill();ctx.stroke();
+    // Inner dot
+    ctx.fillStyle=s.isCity?'#e85555':'#e8b84b';
+    ctx.beginPath();ctx.arc(s.px,s.py,r*0.4,0,Math.PI*2);ctx.fill();
+    // Name label
+    ctx.font=`${s.isCity?'600 ':''} ${s.isCity?11:9.5}px 'Open Sans',sans-serif`;
+    ctx.textAlign='center';
+    // Shadow
+    ctx.fillStyle='rgba(0,0,0,0.8)';ctx.fillText(s.name,s.px+1,s.py-r-4+1);
+    ctx.fillStyle=s.isCity?'#ffdddd':'#ffe8a0';
+    ctx.fillText(s.name,s.px,s.py-r-4);
   });
 }
 
-// Icon drawing
-function drawMountain(mx,my,sz,rng){
-  ctx.strokeStyle='rgba(60,40,20,0.65)';ctx.fillStyle='rgba(145,120,95,0.52)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(mx,my-sz);ctx.lineTo(mx-sz*0.85,my+sz*0.45);ctx.lineTo(mx+sz*0.85,my+sz*0.45);ctx.closePath();ctx.fill();ctx.stroke();
-  if(rng()>0.25){ctx.fillStyle='rgba(245,242,238,0.78)';ctx.beginPath();ctx.moveTo(mx,my-sz);ctx.lineTo(mx-sz*0.28,my-sz*0.42);ctx.lineTo(mx+sz*0.28,my-sz*0.42);ctx.closePath();ctx.fill();}
-}
-function drawTree(tx,ty,sz,type){
-  if(type==='jungle'||type==='swamp'){
-    ctx.fillStyle='rgba(28,78,28,0.6)';ctx.beginPath();ctx.arc(tx,ty-sz*0.2,sz*0.7,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='rgba(18,58,18,0.38)';ctx.beginPath();ctx.arc(tx-sz*0.4,ty,sz*0.44,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(tx+sz*0.4,ty,sz*0.44,0,Math.PI*2);ctx.fill();
-  } else if(type==='tundra'){
-    ctx.strokeStyle='rgba(60,80,60,0.48)';ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(tx,ty-sz);ctx.lineTo(tx,ty+sz*0.5);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(tx-sz*0.6,ty-sz*0.2);ctx.lineTo(tx+sz*0.6,ty-sz*0.2);ctx.stroke();
-    ctx.beginPath();ctx.moveTo(tx-sz*0.38,ty+sz*0.1);ctx.lineTo(tx+sz*0.38,ty+sz*0.1);ctx.stroke();
-  } else {
-    ctx.fillStyle='rgba(50,95,40,0.55)';ctx.beginPath();ctx.moveTo(tx,ty-sz);ctx.lineTo(tx-sz*0.7,ty+sz*0.3);ctx.lineTo(tx+sz*0.7,ty+sz*0.3);ctx.closePath();ctx.fill();
-    ctx.fillStyle='rgba(44,84,34,0.44)';ctx.beginPath();ctx.moveTo(tx,ty-sz*0.48);ctx.lineTo(tx-sz*0.85,ty+sz*0.72);ctx.lineTo(tx+sz*0.85,ty+sz*0.72);ctx.closePath();ctx.fill();
-    ctx.strokeStyle='rgba(38,62,28,0.38)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(tx,ty+sz*0.5);ctx.lineTo(tx,ty+sz*0.92);ctx.stroke();
-  }
-}
-function drawSwampTuft(sx,sy,sz){
-  ctx.strokeStyle='rgba(38,68,28,0.55)';ctx.lineWidth=1;
-  for(let i=0;i<5;i++){const a=-Math.PI/2+(-0.6+i*0.3);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(a)*sz,sy+Math.sin(a)*sz);ctx.stroke();}
-  ctx.fillStyle='rgba(58,88,38,0.38)';ctx.beginPath();ctx.ellipse(sx,sy,sz*0.38,sz*0.18,0,0,Math.PI*2);ctx.fill();
-}
-function drawValley(vx,vy,w,h,rng){
-  ctx.strokeStyle='rgba(80,100,58,0.38)';ctx.lineWidth=1;
-  for(let i=0;i<3;i++){const o=i*4;ctx.beginPath();ctx.ellipse(vx,vy,w-o,h-o*0.5,0,0,Math.PI*2);ctx.stroke();}
-}
-function drawRuins(rx,ry,sz){
-  ctx.strokeStyle='rgba(80,60,40,0.68)';ctx.fillStyle='rgba(118,98,78,0.38)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.rect(rx-sz,ry-sz,sz*0.58,sz*1.5);ctx.fill();ctx.stroke();
-  ctx.beginPath();ctx.rect(rx+sz*0.58,ry-sz*0.5,sz*0.48,sz);ctx.fill();ctx.stroke();
-  ctx.fillStyle='rgba(78,48,28,0.58)';ctx.font=`${sz*1.2}px serif`;ctx.textAlign='center';ctx.fillText('☠',rx,ry+sz*0.3);
-}
-function drawCastle(cx,cy,sz){
-  ctx.strokeStyle='rgba(60,40,20,0.7)';ctx.fillStyle='rgba(158,138,108,0.55)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.rect(cx-sz*0.5,cy-sz*1.2,sz,sz*1.8);ctx.fill();ctx.stroke();
-  for(let i=0;i<3;i++){ctx.beginPath();ctx.rect(cx-sz*0.5+i*sz*0.38,cy-sz*1.5,sz*0.24,sz*0.28);ctx.fill();ctx.stroke();}
-  ctx.fillStyle='rgba(38,18,8,0.6)';ctx.beginPath();ctx.arc(cx,cy+sz*0.2,sz*0.24,Math.PI,0);ctx.rect(cx-sz*0.24,cy+sz*0.2,sz*0.48,sz*0.38);ctx.fill();
-  ctx.strokeStyle='rgba(139,32,32,0.78)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx,cy-sz*1.5);ctx.lineTo(cx,cy-sz*2.1);ctx.stroke();
-  ctx.fillStyle='rgba(139,32,32,0.78)';ctx.beginPath();ctx.moveTo(cx,cy-sz*2.1);ctx.lineTo(cx+sz*0.58,cy-sz*1.85);ctx.lineTo(cx,cy-sz*1.58);ctx.closePath();ctx.fill();
-}
-function drawBridge(x1,y1,x2,y2,w){
-  const a=Math.atan2(y2-y1,x2-x1),p=a+Math.PI/2,hw=w/2;
-  ctx.fillStyle='rgba(118,88,58,0.65)';ctx.strokeStyle='rgba(78,52,28,0.7)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(x1+Math.cos(p)*hw,y1+Math.sin(p)*hw);ctx.lineTo(x2+Math.cos(p)*hw,y2+Math.sin(p)*hw);ctx.lineTo(x2-Math.cos(p)*hw,y2-Math.sin(p)*hw);ctx.lineTo(x1-Math.cos(p)*hw,y1-Math.sin(p)*hw);ctx.closePath();ctx.fill();ctx.stroke();
-  const dist=Math.sqrt((x2-x1)**2+(y2-y1)**2),steps=Math.floor(dist/8);
-  for(let i=1;i<steps;i++){const t=i/steps,px=x1+(x2-x1)*t,py=y1+(y2-y1)*t;ctx.beginPath();ctx.moveTo(px+Math.cos(p)*(hw+1),py+Math.sin(p)*(hw+1));ctx.lineTo(px-Math.cos(p)*(hw+1),py-Math.sin(p)*(hw+1));ctx.stroke();}
-}
-function drawRoad(pts){
-  ctx.strokeStyle='rgba(138,108,68,0.48)';ctx.lineWidth=2;ctx.setLineDash([6,4]);
-  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
-  ctx.stroke();ctx.setLineDash([]);
+function drawHex(cx,cy,size,tile){
+  ctx.beginPath();
+  for(let i=0;i<6;i++){const c=hexCorner(cx,cy,size-0.5,i);i===0?ctx.moveTo(c.x,c.y):ctx.lineTo(c.x,c.y);}
+  ctx.closePath();
+  ctx.fillStyle=tile.fill;ctx.fill();
+  ctx.strokeStyle=tile.stroke;ctx.lineWidth=0.8;ctx.stroke();
 }
 
+function drawTileIcon(cx,cy,size,tile){
+  const t=tile.type;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  if(t==='MOUNTAINS'||t==='SNOW_PEAK'){
+    // Mountain triangle
+    ctx.fillStyle=t==='SNOW_PEAK'?'rgba(255,255,255,0.7)':'rgba(255,255,255,0.4)';
+    const s=size*0.45;
+    ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx-s*0.8,cy+s*0.5);ctx.lineTo(cx+s*0.8,cy+s*0.5);ctx.closePath();ctx.fill();
+    if(t==='SNOW_PEAK'){ctx.fillStyle='rgba(220,235,255,0.85)';ctx.beginPath();ctx.moveTo(cx,cy-s);ctx.lineTo(cx-s*0.28,cy-s*0.3);ctx.lineTo(cx+s*0.28,cy-s*0.3);ctx.closePath();ctx.fill();}
+  } else if(t==='FOREST'||t==='JUNGLE'){
+    ctx.font=`${size*0.85}px serif`;ctx.fillStyle='rgba(255,255,255,0.35)';
+    ctx.fillText(t==='JUNGLE'?'🌴':'🌲',cx,cy);
+  } else if(t==='SWAMP'){
+    ctx.font=`${size*0.75}px serif`;ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText('🌿',cx,cy);
+  } else if(t==='DESERT'){
+    ctx.font=`${size*0.7}px serif`;ctx.fillStyle='rgba(255,255,255,0.25)';ctx.fillText('🏜',cx,cy);
+  } else if(t==='SNOW'||t==='TUNDRA'){
+    ctx.fillStyle='rgba(200,220,255,0.35)';ctx.font=`${size*0.55}px serif`;ctx.fillText('❄',cx,cy);
+  } else if(t==='LAVA'){
+    ctx.fillStyle='rgba(255,160,50,0.5)';ctx.font=`${size*0.7}px serif`;ctx.fillText('🔥',cx,cy);
+  } else if(t==='VOLCANIC'){
+    ctx.fillStyle='rgba(255,100,30,0.35)';ctx.font=`${size*0.7}px serif`;ctx.fillText('🌋',cx,cy);
+  } else if(t==='HILLS'){
+    // Hill bumps
+    ctx.fillStyle='rgba(255,255,255,0.22)';
+    ctx.beginPath();ctx.arc(cx-size*0.22,cy+size*0.1,size*0.28,Math.PI,0);ctx.fill();
+    ctx.beginPath();ctx.arc(cx+size*0.2,cy+size*0.12,size*0.24,Math.PI,0);ctx.fill();
+  } else if(t==='RUINS'){
+    ctx.font=`${size*0.7}px serif`;ctx.fillStyle='rgba(255,200,150,0.6)';ctx.fillText('☠',cx,cy);
+    ctx.font=`italic ${size*0.38}px 'Open Sans',sans-serif`;
+    ctx.fillStyle='rgba(220,180,120,0.8)';ctx.fillText(tile.label,cx,cy+size*0.72);
+  } else if(t==='CASTLE'){
+    ctx.font=`${size*0.75}px serif`;ctx.fillStyle='rgba(255,220,180,0.65)';ctx.fillText('🏰',cx,cy);
+    ctx.font=`bold ${size*0.38}px 'Open Sans',sans-serif`;
+    ctx.fillStyle='rgba(255,220,180,0.85)';ctx.fillText(tile.label,cx,cy+size*0.75);
+  } else if(t==='LAKE'){
+    ctx.fillStyle='rgba(100,180,255,0.25)';ctx.font=`${size*0.55}px serif`;ctx.fillText('〜',cx,cy);
+  }
+  ctx.textBaseline='alphabetic';
+}
+
+// ── Generate ──────────────────────────────────────────────────────────────────
 function generateMap(){
   const sizeKey=document.getElementById('mapSize').value;
   const landType=document.getElementById('landType').value;
@@ -331,230 +518,234 @@ function generateMap(){
   const era=document.getElementById('era').value;
   const seedVal=document.getElementById('seedInput').value.trim();
   const seed=seedVal?hashStr(seedVal):Math.floor(Math.random()*2147483647);
-  lastSizeKey=sizeKey;
+
   document.getElementById('seedInput').value=seed;
-  document.getElementById('seedDisplay').textContent='Seed: '+seed;
+  document.getElementById('topSeed').textContent='Seed: '+seed;
+
   const rng=createRNG(seed);
   const sz=SIZES[sizeKey];
-  canvas.width=sz.w;canvas.height=sz.h;
-  settlements=[];featureFns=[];baseImg=null;
-  document.getElementById('mapEmpty').style.display='none';
-  document.getElementById('mapCompass').style.display='block';
-  document.getElementById('mapTitleOverlay').style.display='block';
-  document.getElementById('mapLegend').style.display='block';
-  document.getElementById('renameTooltip').style.display='none';
+  mapCols=sz.cols;mapRows=sz.rows;
+  hexSize=22;
+
+  // Canvas size
+  const cw=Math.ceil(hexSize*1.5*mapCols+hexSize*2);
+  const ch=Math.ceil(hexSize*Math.sqrt(3)*mapRows+hexSize*Math.sqrt(3));
+  canvas.width=cw;canvas.height=ch;
+
+  // Map name
   const mapName=PRE[Math.floor(rng()*PRE.length)]+SUF[Math.floor(rng()*SUF.length)];
   document.getElementById('mapTitleText').textContent='The Realm of '+mapName;
-  const W=sz.w,H=sz.h;
+  document.getElementById('mapTitleBar').style.display='block';
+  document.getElementById('mapEmpty').style.display='none';
 
   // Heightmap
   const ng=makeNoise(rng,64,64);
   const hm=[];
-  for(let y=0;y<H;y++){hm[y]=[];for(let x=0;x<W;x++){
-    const nx=x/W*8,ny=y/H*8;let h=fbm(ng,nx,ny,6);
-    const lt=landType==='random'?['continent','island','archipelago','peninsula','inland','coastal'][Math.floor(rng()*6)]:landType;
-    if(lt==='island'){const dx=(x/W-0.5)*2,dy=(y/H-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.75;}
-    else if(lt==='archipelago'){const dx=(x/W-0.5)*2,dy=(y/H-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.55;}
-    else if(lt==='peninsula'){const dy=(y/H-0.5)*2;h-=Math.abs(dy)*0.45+(1-x/W)*0.3;}
-    else if(lt==='coastal'){h-=(1-x/W)*0.55;}
-    else if(lt==='inland'){const dx=(x/W-0.5)*2,dy=(y/H-0.5)*2;h+=0.2-Math.sqrt(dx*dx+dy*dy)*0.15;}
-    else if(lt==='atoll'){const dx=(x/W-0.5)*2,dy=(y/H-0.5)*2;h-=Math.abs(Math.sqrt(dx*dx+dy*dy)-0.4)*2;}
-    else if(lt==='fjord'){h-=(1-x/W)*0.3;if(y/H>0.3&&y/H<0.7)h+=0.1;}
-    else if(lt==='delta'){h-=(y/H)*0.4;if(x/W>0.3&&x/W<0.7)h+=0.15;}
-    hm[y][x]=Math.max(0,Math.min(1,h));
-  }}
-
-  let wt=0.42;
-  if(waterType==='arid')wt=0.3;
-  else if(waterType==='abundant'||waterType==='archipelago')wt=0.52;
-  else if(waterType==='coastal')wt=0.46;
-
-  // Parchment base
-  const pg=ctx.createLinearGradient(0,0,W,H);
-  pg.addColorStop(0,'#f5e6c4');pg.addColorStop(0.4,'#f0ddb5');pg.addColorStop(1,'#e8d49e');
-  ctx.fillStyle=pg;ctx.fillRect(0,0,W,H);
-  for(let i=0;i<W*H*0.11;i++){const px=Math.floor(rng()*W),py=Math.floor(rng()*H);ctx.fillStyle=`rgba(${rng()>0.5?174:133},${rng()>0.5?124:94},53,${rng()*0.052})`;ctx.fillRect(px,py,1+(rng()*2|0),1+(rng()*2|0));}
-
-  // Terrain pixels
-  const id=ctx.getImageData(0,0,W,H),pd=id.data;
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-    const h=hm[y][x],i=(y*W+x)*4;let r,g,b;
-    if(h<wt-0.09){r=54;g=84;b=128;}
-    else if(h<wt){r=88;g=128;b=163;}
-    else{const lh=(h-wt)/(1-wt);
-      switch(terrain){
-        case 'forest':r=58+lh*28|0;g=93+lh*44|0;b=48+lh*18|0;break;
-        case 'jungle':r=38+lh*24|0;g=98+lh*48|0;b=38+lh*18|0;break;
-        case 'mountains':if(lh>0.65){r=198;g=193;b=188;}else if(lh>0.4){r=138;g=118;b=98;}else{r=113;g=138;b=83;}break;
-        case 'desert':case 'savanna':r=198+lh*38|0;g=163+lh*28|0;b=73+lh*18|0;break;
-        case 'tundra':r=203+lh*43|0;g=213+lh*33|0;b=223+lh*23|0;break;
-        case 'swamp':r=63+lh*28|0;g=83+lh*38|0;b=53+lh*18|0;break;
-        case 'volcanic':if(lh>0.7){r=222;g=73;b=23;}else{r=63+lh*48|0;g=38+lh*28|0;b=38+lh*18|0;}break;
-        case 'plains':r=163+lh*38|0;g=173+lh*28|0;b=78+lh*18|0;break;
-        case 'tidal':r=128+lh*48|0;g=148+lh*38|0;b=118+lh*28|0;break;
-        default:if(lh>0.75){r=178;g=173;b=168;}else if(lh>0.5){r=128;g=113;b=88;}else if(lh>0.25){r=98;g=128;b=73;}else{r=138;g=160;b=98;}
-      }
-      const bl=0.35;r=r*(1-bl)+206*bl|0;g=g*(1-bl)+181*bl|0;b=b*(1-bl)+136*bl|0;
+  for(let row=0;row<mapRows;row++){
+    hm[row]=[];
+    for(let col=0;col<mapCols;col++){
+      const nx=col/mapCols*8,ny=row/mapRows*8;
+      let h=fbm(ng,nx,ny,6);
+      const lt=landType==='random'?['continent','island','archipelago','peninsula','inland','coastal'][Math.floor(rng()*6)]:landType;
+      if(lt==='island'){const dx=(col/mapCols-0.5)*2,dy=(row/mapRows-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.75;}
+      else if(lt==='archipelago'){const dx=(col/mapCols-0.5)*2,dy=(row/mapRows-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.55;}
+      else if(lt==='peninsula'){const dy=(row/mapRows-0.5)*2;h-=Math.abs(dy)*0.45+(1-col/mapCols)*0.3;}
+      else if(lt==='coastal'){h-=(1-col/mapCols)*0.55;}
+      else if(lt==='inland'){const dx=(col/mapCols-0.5)*2,dy=(row/mapRows-0.5)*2;h+=0.2-Math.sqrt(dx*dx+dy*dy)*0.15;}
+      else if(lt==='atoll'){const dx=(col/mapCols-0.5)*2,dy=(row/mapRows-0.5)*2;h-=Math.abs(Math.sqrt(dx*dx+dy*dy)-0.4)*2;}
+      else if(lt==='fjord'){h-=(1-col/mapCols)*0.3;if(row/mapRows>0.3&&row/mapRows<0.7)h+=0.1;}
+      else if(lt==='delta'){h-=(row/mapRows)*0.4;if(col/mapCols>0.3&&col/mapCols<0.7)h+=0.15;}
+      hm[row][col]=Math.max(0,Math.min(1,h));
     }
-    pd[i]=r;pd[i+1]=g;pd[i+2]=b;pd[i+3]=255;
   }
-  ctx.putImageData(id,0,0);
 
-  // Rivers
-  const riverPaths=[];
-  if(waterType!=='arid'&&waterType!=='lakes'){
-    const nr=waterType==='abundant'||waterType==='rivers'?7:3;
-    for(let r2=0;r2<nr;r2++){
-      let sx=Math.floor(rng()*W*0.6+W*0.2),sy=Math.floor(rng()*H*0.35);
-      if(!hm[sy]||hm[sy][sx]<wt+0.1)continue;
-      const path=[{x:sx,y:sy}];let cx2=sx,cy2=sy;
-      ctx.strokeStyle='rgba(72,112,152,0.68)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx2,cy2);
-      for(let step=0;step<220;step++){
-        let bx=cx2,by=cy2,bh=hm[cy2]?.[cx2]||0;
-        for(const [dx,dy] of [[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]]){
-          const nx2=cx2+dx,ny2=cy2+dy;if(nx2<0||nx2>=W||ny2<0||ny2>=H)continue;
-          const nh=hm[ny2][nx2];if(nh<bh){bh=nh;bx=nx2;by=ny2;}
+  // Moisture map
+  const mg=makeNoise(rng,32,32);
+  const mm=[];
+  for(let row=0;row<mapRows;row++){mm[row]=[];for(let col=0;col<mapCols;col++)mm[row][col]=fbm(mg,col/mapCols*6,row/mapRows*6,4);}
+
+  // Water threshold
+  let wt=0.42;
+  if(waterType==='arid')wt=0.32;
+  else if(waterType==='abundant')wt=0.5;
+  else if(waterType==='coastal')wt=0.45;
+
+  // Assign tiles
+  hexGrid=[];
+  settlements=[];
+  const rng2=createRNG(seed+1);
+
+  for(let row=0;row<mapRows;row++){
+    hexGrid[row]=[];
+    for(let col=0;col<mapCols;col++){
+      const h=hm[row][col],m=mm[row][col];
+      let type,label='';
+      if(h<wt-0.1){type='DEEP_OCEAN';}
+      else if(h<wt){type='OCEAN';}
+      else if(h<wt+0.04){type='COAST';}
+      else{
+        const lh=(h-wt)/(1-wt);
+        switch(terrain){
+          case 'mountains':
+            if(lh>0.8)type='SNOW_PEAK';
+            else if(lh>0.55)type='MOUNTAINS';
+            else if(lh>0.3)type='HILLS';
+            else type=m>0.55?'FOREST':'PLAINS';
+            break;
+          case 'forest':
+            if(lh>0.75)type='MOUNTAINS';
+            else if(lh>0.45)type='FOREST';
+            else type='GRASSLAND';
+            break;
+          case 'jungle':
+            if(lh>0.75)type='MOUNTAINS';
+            else if(lh>0.35)type='JUNGLE';
+            else type='GRASSLAND';
+            break;
+          case 'desert':
+            if(lh>0.78)type='MOUNTAINS';
+            else if(lh>0.5)type='HILLS';
+            else type='DESERT';
+            break;
+          case 'tundra':
+            if(lh>0.7)type='SNOW_PEAK';
+            else if(lh>0.45)type='SNOW';
+            else type='TUNDRA';
+            break;
+          case 'swamp':
+            if(lh>0.7)type='MOUNTAINS';
+            else if(lh>0.4)type=m>0.5?'FOREST':'SWAMP';
+            else type='SWAMP';
+            break;
+          case 'plains':
+            if(lh>0.75)type='MOUNTAINS';
+            else if(lh>0.5)type='HILLS';
+            else type=m>0.6?'GRASSLAND':'PLAINS';
+            break;
+          case 'savanna':
+            if(lh>0.78)type='MOUNTAINS';
+            else if(lh>0.5)type='HILLS';
+            else type=m>0.55?'PLAINS':'SAVANNA';
+            break;
+          case 'volcanic':
+            if(lh>0.75)type='LAVA';
+            else if(lh>0.5)type='VOLCANIC';
+            else type=m>0.5?'HILLS':'VOLCANIC';
+            break;
+          default: // mixed
+            if(lh>0.82)type='SNOW_PEAK';
+            else if(lh>0.65)type='MOUNTAINS';
+            else if(lh>0.5)type=m>0.5?'FOREST':'HILLS';
+            else if(lh>0.3)type=m>0.65?'FOREST':m>0.4?'GRASSLAND':'PLAINS';
+            else type=m>0.6?'SWAMP':m>0.3?'PLAINS':'DESERT';
         }
-        bx+=Math.floor((rng()-0.5)*4);bx=Math.max(0,Math.min(W-1,bx));
-        cx2=bx;cy2=by;ctx.lineTo(cx2,cy2);path.push({x:cx2,y:cy2});
-        if(hm[cy2][cx2]<wt-0.05)break;
       }
-      ctx.stroke();riverPaths.push(path);
+      hexGrid[row][col]={...TILE[type],type,label};
     }
   }
 
   // Lakes
-  if(waterType==='lakes'||waterType==='moderate'||waterType==='abundant'){
-    const nl=waterType==='abundant'?5:waterType==='lakes'?6:2;
+  if(waterType!=='arid'&&waterType!=='rivers'){
+    const nl=waterType==='lakes'||waterType==='abundant'?8:3;
     for(let l=0;l<nl;l++){
-      const lx=Math.floor(rng()*W*0.7+W*0.15),ly=Math.floor(rng()*H*0.7+H*0.15);
-      if(!hm[ly]||hm[ly][lx]<wt+0.05)continue;
-      ctx.fillStyle='rgba(72,122,162,0.58)';ctx.strokeStyle='rgba(52,92,132,0.48)';ctx.lineWidth=1.5;
-      ctx.beginPath();ctx.ellipse(lx,ly,20+rng()*48|0,13+rng()*33|0,rng()*Math.PI,0,Math.PI*2);ctx.fill();ctx.stroke();
+      const lc=2+Math.floor(rng2()*( mapCols-4)),lr=2+Math.floor(rng2()*(mapRows-4));
+      if(hm[lr][lc]<wt+0.05)continue;
+      const lsz=1+Math.floor(rng2()*3);
+      for(let dr=-lsz;dr<=lsz;dr++)for(let dc=-lsz;dc<=lsz;dc++){
+        const nr=lr+dr,nc=lc+dc;
+        if(nr>=0&&nr<mapRows&&nc>=0&&nc<mapCols&&Math.sqrt(dr*dr+dc*dc)<=lsz&&hm[nr][nc]>wt)
+          hexGrid[nr][nc]={...TILE['LAKE'],type:'LAKE',label:''};
+      }
     }
   }
 
-  // Save base
-  baseImg=ctx.getImageData(0,0,W,H);
-
-  // Build feature fns
-  const rng2=createRNG(seed+1);
-
-  // Mountains
-  if(['mountains','mixed','volcanic'].includes(terrain)){
-    const nm=terrain==='mountains'?22:10;
-    const mpts=[];for(let m=0;m<nm*3;m++){const mx=Math.floor(rng2()*W),my=Math.floor(rng2()*H);if(hm[my]&&hm[my][mx]>wt+0.18&&hm[my][mx]>0.62)mpts.push({mx,my,sz:9+rng2()*11});}
-    featureFns.push(()=>mpts.slice(0,nm).forEach(({mx,my,sz})=>drawMountain(mx,my,sz,rng2)));
+  // Rivers (mark certain hex columns)
+  if(waterType!=='arid'&&waterType!=='lakes'){
+    const nr=waterType==='rivers'||waterType==='abundant'?5:2;
+    for(let r2=0;r2<nr;r2++){
+      let rc=2+Math.floor(rng2()*(mapCols-4)),rr=0;
+      // find a high starting point
+      while(rr<mapRows&&(hm[rr][rc]||0)<wt+0.12)rr++;
+      for(let step=0;step<mapRows&&rr<mapRows&&rc>=0&&rc<mapCols;step++){
+        if(hm[rr][rc]<wt)break;
+        if(hexGrid[rr][rc].type!=='LAKE')hexGrid[rr][rc]={...TILE['RIVER'],type:'RIVER',label:''};
+        // flow towards lower hex
+        let bestR=rr+1,bestC=rc,bestH=hm[rr+1]?.[rc]||0;
+        const neighbors=[[rr+1,rc-1],[rr+1,rc],[rr+1,rc+1],[rr,rc-1],[rr,rc+1]];
+        for(const[nr2,nc2]of neighbors){if(nr2>=0&&nr2<mapRows&&nc2>=0&&nc2<mapCols){const nh=hm[nr2][nc2]||0;if(nh<bestH){bestH=nh;bestR=nr2;bestC=nc2;}}}
+        rr=bestR;rc=bestC;
+      }
+    }
   }
 
-  // Trees
-  if(['forest','jungle','swamp','mixed','tundra','savanna'].includes(terrain)){
-    const nt=terrain==='forest'?85:terrain==='jungle'?95:terrain==='swamp'?42:32;
-    const tpts=[];for(let t=0;t<nt*3;t++){const tx=Math.floor(rng2()*W),ty=Math.floor(rng2()*H);if(hm[ty]&&hm[ty][tx]>wt+0.02&&hm[ty][tx]<0.78)tpts.push({tx,ty,sz:5+rng2()*5});}
-    featureFns.push(()=>tpts.slice(0,nt).forEach(({tx,ty,sz})=>drawTree(tx,ty,sz,terrain)));
-  }
-
-  // Swamp tufts
-  if(terrain==='swamp'||terrain==='tidal'){
-    const spts=[];for(let s=0;s<80;s++){const sx=Math.floor(rng2()*W),sy=Math.floor(rng2()*H);if(hm[sy]&&hm[sy][sx]>wt)spts.push({sx,sy,sz:6+rng2()*5});}
-    featureFns.push(()=>spts.forEach(({sx,sy,sz})=>drawSwampTuft(sx,sy,sz)));
-  }
-
-  // Valleys
-  const vpts=[];for(let v=0;v<12;v++){const vx=Math.floor(rng2()*W*0.7+W*0.15),vy=Math.floor(rng2()*H*0.7+H*0.15);if(hm[vy]&&hm[vy][vx]>wt+0.02&&hm[vy][vx]<0.55)vpts.push({vx,vy,w:25+rng2()*35,h:12+rng2()*18});}
-  featureFns.push(()=>vpts.forEach(({vx,vy,w,h})=>drawValley(vx,vy,w,h,rng2)));
-
-  // Ruins
+  // Ruins & Castles
   const numRuins=era==='ancient'?6:era==='dark'?5:era==='apocalyptic'?7:3;
-  const ruinPts=[];const usedR=new Set();
-  for(let r3=0;r3<numRuins*4&&ruinPts.length<numRuins;r3++){
-    const rx=Math.floor(rng2()*W*0.8+W*0.1),ry=Math.floor(rng2()*H*0.8+H*0.1);
-    if(!hm[ry]||hm[ry][rx]<wt+0.03)continue;
-    let rname;do{rname=RUINS[Math.floor(rng2()*RUINS.length)];}while(usedR.has(rname));
-    usedR.add(rname);ruinPts.push({rx,ry,sz:7+rng2()*5,name:rname});
-  }
-  featureFns.push(()=>ruinPts.forEach(({rx,ry,sz,name})=>{
-    drawRuins(rx,ry,sz);
-    ctx.font="italic 7.5px 'Crimson Text',serif";ctx.fillStyle='rgba(78,38,18,0.68)';ctx.textAlign='center';ctx.fillText(name,rx,ry+17);
-  }));
-
-  // Castles
   const numCastles=settlementCount==='none'?0:settlementCount==='few'?1:settlementCount==='many'?4:2;
-  const castlePts=[];const usedC=new Set();
-  for(let c=0;c<numCastles*5&&castlePts.length<numCastles;c++){
-    const cx=Math.floor(rng2()*W*0.7+W*0.15),cy=Math.floor(rng2()*H*0.7+H*0.15);
-    if(!hm[cy]||hm[cy][cx]<wt+0.05)continue;
-    let cname;do{cname=CASTLES[Math.floor(rng2()*CASTLES.length)];}while(usedC.has(cname));
-    usedC.add(cname);castlePts.push({cx,cy,sz:8+rng2()*6,name:cname});
+  const usedR=new Set(),usedC=new Set();
+
+  for(let r3=0;r3<numRuins*6;r3++){
+    if([...usedR].length>=numRuins)break;
+    const rc=2+Math.floor(rng2()*(mapCols-4)),rr=2+Math.floor(rng2()*(mapRows-4));
+    if(hm[rr][rc]<wt+0.04)continue;
+    const ttype=hexGrid[rr][rc].type;
+    if(['OCEAN','DEEP_OCEAN','COAST','LAKE','RIVER'].includes(ttype))continue;
+    let rname;do{rname=RUINS[Math.floor(rng2()*RUINS.length)];}while(usedR.has(rname));
+    usedR.add(rname);
+    hexGrid[rr][rc]={...hexGrid[rr][rc],type:'RUINS',label:rname};
   }
-  featureFns.push(()=>castlePts.forEach(({cx,cy,sz,name})=>{
-    drawCastle(cx,cy,sz);
-    ctx.font="bold italic 8px 'Crimson Text',serif";ctx.fillStyle='rgba(78,28,8,0.8)';ctx.textAlign='center';ctx.fillText(name,cx,cy+23);
-  }));
+
+  for(let c=0;c<numCastles*6;c++){
+    if([...usedC].length>=numCastles)break;
+    const cc=2+Math.floor(rng2()*(mapCols-4)),cr=2+Math.floor(rng2()*(mapRows-4));
+    if(hm[cr][cc]<wt+0.05)continue;
+    const ttype=hexGrid[cr][cc].type;
+    if(['OCEAN','DEEP_OCEAN','COAST','LAKE','RIVER','RUINS'].includes(ttype))continue;
+    let cname;do{cname=CASTLES[Math.floor(rng2()*CASTLES.length)];}while(usedC.has(cname));
+    usedC.add(cname);
+    hexGrid[cr][cc]={...hexGrid[cr][cc],type:'CASTLE',label:cname};
+  }
 
   // Settlements
-  const numS=settlementCount==='none'?0:settlementCount==='few'?3:settlementCount==='many'?12:6;
+  const numS=settlementCount==='none'?0:settlementCount==='few'?3:settlementCount==='many'?14:7;
   const usedN=new Set();
-  for(let s2=0;s2<numS;s2++){let att=0;while(att<60){const sx=Math.floor(rng2()*W*0.78+W*0.11),sy=Math.floor(rng2()*H*0.78+H*0.11);if(!hm[sy]||hm[sy][sx]<wt+0.03){att++;continue;}let nm;do{nm=TOWNS[Math.floor(rng2()*TOWNS.length)];}while(usedN.has(nm));usedN.add(nm);settlements.push({x:sx,y:sy,name:nm,isCity:rng2()>0.55});break;}}
-
-  // Roads
-  if(settlements.length>1){
-    const roadPairs=[];
-    for(let i=0;i<settlements.length-1;i++){if(rng2()>0.6)continue;roadPairs.push([settlements[i],settlements[i+1]]);}
-    featureFns.push(()=>roadPairs.forEach(([a,b])=>drawRoad([a,b])));
-    roadPairs.forEach(([a,b])=>drawRoad([a,b]));
-  }
-
-  // Bridges
-  if(riverPaths.length&&settlements.length>1){
-    const bridgePts=[];
-    for(let i=0;i<Math.min(3,riverPaths.length);i++){
-      const path=riverPaths[i],mid=Math.floor(path.length/2);
-      if(mid>0&&mid<path.length){const p=path[mid],prev=path[mid-1];if(hm[p.y]&&hm[p.y][p.x]>wt)bridgePts.push({x1:prev.x,y1:prev.y,x2:p.x+8,y2:p.y});}
+  for(let s=0;s<numS;s++){
+    let att=0;
+    while(att<80){
+      const sc=2+Math.floor(rng2()*(mapCols-4)),sr=2+Math.floor(rng2()*(mapRows-4));
+      if(hm[sr][sc]<wt+0.04){att++;continue;}
+      const ttype=hexGrid[sr][sc].type;
+      if(['OCEAN','DEEP_OCEAN','LAKE','RIVER','RUINS','CASTLE'].includes(ttype)){att++;continue;}
+      let nm;do{nm=TOWNS[Math.floor(rng2()*TOWNS.length)];}while(usedN.has(nm));
+      usedN.add(nm);
+      const {x,y}=hexToPixel(sc,sr,hexSize);
+      const px=x+hexSize,py=y+hexSize*Math.sqrt(3)/2;
+      settlements.push({col:sc,row:sr,px,py,name:nm,isCity:rng2()>0.55});
+      break;
     }
-    featureFns.push(()=>bridgePts.forEach(({x1,y1,x2,y2})=>drawBridge(x1,y1,x2,y2,6)));
-    bridgePts.forEach(({x1,y1,x2,y2})=>drawBridge(x1,y1,x2,y2,6));
   }
-
-  // Draw all features
-  drawAllFeatures();
-  drawSettlements();
-
-  // Vignette
-  const vig=ctx.createRadialGradient(W/2,H/2,H*0.27,W/2,H/2,H*0.81);
-  vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(44,24,16,0.3)');
-  ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
-  const eb=ctx.createLinearGradient(0,0,0,H);
-  eb.addColorStop(0,'rgba(44,24,16,0.2)');eb.addColorStop(0.05,'rgba(0,0,0,0)');eb.addColorStop(0.95,'rgba(0,0,0,0)');eb.addColorStop(1,'rgba(44,24,16,0.2)');
-  ctx.fillStyle=eb;ctx.fillRect(0,0,W,H);
-
-  // Border
-  ctx.strokeStyle='rgba(98,58,18,0.48)';ctx.lineWidth=3;ctx.strokeRect(8,8,W-16,H-16);
-  ctx.strokeStyle='rgba(98,58,18,0.2)';ctx.lineWidth=1;ctx.strokeRect(13,13,W-26,H-26);
-  [[14,14],[W-14,14],[14,H-14],[W-14,H-14]].forEach(([cx3,cy3])=>{ctx.fillStyle='rgba(98,58,18,0.48)';ctx.beginPath();ctx.arc(cx3,cy3,3,0,Math.PI*2);ctx.fill();});
 
   // Legend
-  const li=[];
-  if(waterType!=='arid')li.push({icon:'💧',label:'Water'});
-  li.push({icon:tIcon(terrain),label:tLabel(terrain)});
-  if(numS>0)li.push({icon:'●',label:'Town'});
-  if(numCastles>0)li.push({icon:'🏰',label:'Castle'});
-  if(numRuins>0)li.push({icon:'☠',label:'Ruins'});
-  if(waterType!=='arid'&&waterType!=='lakes')li.push({icon:'〜',label:'River'});
-  if(settlements.length>1)li.push({icon:'- -',label:'Road'});
-  document.getElementById('legendItems').innerHTML=li.map(it=>`<div class="legend-item"><div class="legend-swatch">${it.icon}</div><span>${it.label}</span></div>`).join('');
+  const typesOnMap=new Set();
+  hexGrid.forEach(row=>row.forEach(t=>{if(t)typesOnMap.add(t.type);}));
+  const legendItems=[...typesOnMap].filter(t=>!['RUINS','CASTLE'].includes(t)).slice(0,10);
+  document.getElementById('legendGrid').innerHTML=legendItems.map(t=>`
+    <div class="legend-item">
+      <div class="legend-swatch" style="background:${TILE[t].fill};border-color:${TILE[t].stroke}"></div>
+      <span>${TILE[t].label}</span>
+    </div>`).join('');
+  if(numRuins>0)document.getElementById('legendGrid').innerHTML+=`<div class="legend-item"><div class="legend-swatch" style="background:#3a2a18;font-size:9px;display:flex;align-items:center;justify-content:center;">☠</div><span>Ruins</span></div>`;
+  if(numCastles>0)document.getElementById('legendGrid').innerHTML+=`<div class="legend-item"><div class="legend-swatch" style="background:#3a3028;font-size:9px;display:flex;align-items:center;justify-content:center;">🏰</div><span>Castle</span></div>`;
 
-  document.getElementById('infoText').textContent=`${sizeKey.charAt(0).toUpperCase()+sizeKey.slice(1)} · ${tLabel(terrain)} · ${settlements.length} settlements · ${ruinPts.length} ruins · ${castlePts.length} castles`;
-  refreshList();applyZoom();
+  renderMap();
+  refreshTownList();
+  setTimeout(centerMap,50);
 }
 
-function tIcon(t){return{forest:'🌲',jungle:'🌴',mountains:'⛰',desert:'🏜',plains:'🌾',tundra:'❄',swamp:'🌿',volcanic:'🌋',savanna:'🌵',tidal:'🌊',mixed:'🗺'}[t]||'🗺';}
-function tLabel(t){return{forest:'Forest',jungle:'Jungle',mountains:'Mountains',desert:'Desert',plains:'Plains',tundra:'Tundra',swamp:'Swamp',volcanic:'Volcanic',savanna:'Savanna',tidal:'Tidal',mixed:'Mixed'}[t]||'Land';}
-
+// ── Events ────────────────────────────────────────────────────────────────────
 document.getElementById('generateBtn').addEventListener('click',()=>{
   const btn=document.getElementById('generateBtn');
-  btn.textContent='⏳ Forging Realm…';btn.disabled=true;
-  setTimeout(()=>{generateMap();btn.textContent='⚔ Forge Realm';btn.disabled=false;},40);
+  btn.textContent='⏳ FORGING…';btn.disabled=true;
+  setTimeout(()=>{generateMap();btn.textContent='⚔ FORGE REALM';btn.disabled=false;},40);
 });
 document.getElementById('randomSeedBtn').onclick=()=>{document.getElementById('seedInput').value=Math.floor(Math.random()*999999);};
 document.getElementById('exportBtn').onclick=()=>{const a=document.createElement('a');a.download='realmforge.png';a.href=canvas.toDataURL('image/png');a.click();};
