@@ -1,516 +1,165 @@
-# Realms<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Realm Forge — Fantasy Map Generator</title>
-  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
     :root{
-      --parchment:#f4e4c1;
-      --parchment-dark:#e8d5a3;
-      --parchment-darker:#d4b896;
-      --ink:#2c1810;
-      --ink-soft:#4a2e1a;
-      --ink-muted:#7a5c3a;
-      --ink-faded:#a08060;
-      --accent:#8b2020;
-      --accent-gold:#c8962a;
-      --water:#5a8fa8;
-      --water-light:#89b8cc;
-      --forest:#4a7a3a;
-      --mountain:#7a6a5a;
-      --desert:#c8a050;
-      --shadow:rgba(44,24,16,0.3);
+      --parchment:#f4e4c1;--parchment-dark:#e8d5a3;--parchment-darker:#d4b896;
+      --ink:#2c1810;--ink-soft:#4a2e1a;--ink-muted:#7a5c3a;--ink-faded:#a08060;
+      --accent:#8b2020;--accent-gold:#c8962a;--shadow:rgba(44,24,16,0.3);
     }
-
-    body{
-      font-family:'Crimson Text',serif;
-      background:#1a0e08;
-      color:var(--ink);
-      min-height:100vh;
-      overflow-x:hidden;
-    }
-
-    /* Outer wooden frame effect */
-    body::before{
-      content:'';
-      position:fixed;
-      inset:0;
-      background:
-        radial-gradient(ellipse at center, #2a1508 0%, #0d0604 100%);
-      z-index:0;
-    }
-
-    .page{
-      position:relative;
-      z-index:1;
-      max-width:1100px;
-      margin:0 auto;
-      padding:24px 16px 48px;
-    }
-
-    /* Header */
-    header{
-      text-align:center;
-      margin-bottom:28px;
-      animation:fadeDown 0.8s ease both;
-    }
-
-    .site-title{
-      font-family:'Cinzel',serif;
-      font-size:clamp(2rem,6vw,3.4rem);
-      font-weight:700;
-      color:var(--accent-gold);
-      text-shadow:2px 2px 0 #2c1810, 0 0 40px rgba(200,150,42,0.3);
-      letter-spacing:0.06em;
-      line-height:1;
-    }
-
-    .site-subtitle{
-      font-family:'Crimson Text',serif;
-      font-style:italic;
-      font-size:1.05rem;
-      color:var(--ink-faded);
-      margin-top:6px;
-      letter-spacing:0.1em;
-    }
-
-    .divider{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin:14px auto;
-      max-width:400px;
-    }
-
-    .divider-line{
-      flex:1;
-      height:1px;
-      background:linear-gradient(to right, transparent, var(--accent-gold), transparent);
-    }
-
-    .divider-icon{color:var(--accent-gold);font-size:1.1rem;}
-
-    /* Main layout */
-    .main-layout{
-      display:grid;
-      grid-template-columns:260px 1fr;
-      gap:20px;
-      align-items:start;
-    }
-
-    @media(max-width:700px){
-      .main-layout{grid-template-columns:1fr;}
-    }
-
-    /* Controls panel */
-    .controls-panel{
-      background:var(--parchment);
-      border:2px solid var(--parchment-darker);
-      border-radius:4px;
-      padding:20px 16px;
-      box-shadow:4px 4px 16px var(--shadow), inset 0 0 40px rgba(200,150,42,0.08);
-      position:relative;
-      animation:fadeUp 0.8s 0.1s ease both;
-    }
-
-    .controls-panel::before{
-      content:'';
-      position:absolute;
-      inset:4px;
-      border:1px solid var(--parchment-darker);
-      border-radius:2px;
-      pointer-events:none;
-      opacity:0.5;
-    }
-
-    .panel-title{
-      font-family:'Cinzel',serif;
-      font-size:0.85rem;
-      font-weight:600;
-      color:var(--accent);
-      letter-spacing:0.12em;
-      text-transform:uppercase;
-      text-align:center;
-      margin-bottom:16px;
-      padding-bottom:10px;
-      border-bottom:1px solid var(--parchment-darker);
-    }
-
-    .control-group{
-      margin-bottom:16px;
-    }
-
-    .control-label{
-      font-family:'Cinzel',serif;
-      font-size:0.72rem;
-      font-weight:600;
-      color:var(--ink-soft);
-      letter-spacing:0.1em;
-      text-transform:uppercase;
-      margin-bottom:5px;
-      display:block;
-    }
-
-    select{
-      width:100%;
-      padding:8px 10px;
-      font-family:'Crimson Text',serif;
-      font-size:0.95rem;
-      color:var(--ink);
-      background:var(--parchment-dark);
-      border:1px solid var(--parchment-darker);
-      border-radius:2px;
-      outline:none;
-      appearance:none;
-      cursor:pointer;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a2e1a'/%3E%3C/svg%3E");
-      background-repeat:no-repeat;
-      background-position:right 10px center;
-      padding-right:28px;
-      transition:border-color 0.2s;
-    }
-
+    body{font-family:'Crimson Text',serif;background:#1a0e08;color:var(--ink);min-height:100vh;overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,#2a1508 0%,#0d0604 100%);z-index:0;}
+    .page{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:20px 12px 48px;}
+    header{text-align:center;margin-bottom:20px;animation:fadeDown 0.8s ease both;}
+    .site-title{font-family:'Cinzel',serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:700;color:var(--accent-gold);text-shadow:2px 2px 0 #2c1810,0 0 40px rgba(200,150,42,0.3);letter-spacing:0.06em;}
+    .site-sub{font-style:italic;font-size:0.95rem;color:var(--ink-faded);margin-top:4px;letter-spacing:0.1em;}
+    .divider{display:flex;align-items:center;gap:10px;margin:10px auto;max-width:360px;}
+    .divider-line{flex:1;height:1px;background:linear-gradient(to right,transparent,var(--accent-gold),transparent);}
+    .divider-icon{color:var(--accent-gold);}
+    .main-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start;}
+    @media(max-width:720px){.main-layout{grid-template-columns:1fr;}}
+    .controls-panel{background:var(--parchment);border:2px solid var(--parchment-darker);border-radius:4px;padding:16px 14px;box-shadow:4px 4px 16px var(--shadow);position:relative;animation:fadeUp 0.8s 0.1s ease both;max-height:92vh;overflow-y:auto;}
+    .controls-panel::before{content:'';position:absolute;inset:4px;border:1px solid var(--parchment-darker);border-radius:2px;pointer-events:none;opacity:0.4;}
+    .panel-title{font-family:'Cinzel',serif;font-size:0.82rem;font-weight:600;color:var(--accent);letter-spacing:0.12em;text-transform:uppercase;text-align:center;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--parchment-darker);}
+    .control-group{margin-bottom:12px;}
+    .control-label{font-family:'Cinzel',serif;font-size:0.68rem;font-weight:600;color:var(--ink-soft);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;display:block;}
+    select{width:100%;padding:7px 28px 7px 9px;font-family:'Crimson Text',serif;font-size:0.92rem;color:var(--ink);background:var(--parchment-dark);border:1px solid var(--parchment-darker);border-radius:2px;outline:none;appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a2e1a'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;transition:border-color 0.2s;}
     select:focus{border-color:var(--accent-gold);}
-
-    /* Seed input */
-    .seed-row{
-      display:flex;
-      gap:6px;
-      align-items:center;
-    }
-
-    .seed-input{
-      flex:1;
-      padding:8px 10px;
-      font-family:'Crimson Text',serif;
-      font-size:0.95rem;
-      color:var(--ink);
-      background:var(--parchment-dark);
-      border:1px solid var(--parchment-darker);
-      border-radius:2px;
-      outline:none;
-      transition:border-color 0.2s;
-    }
-
+    .seed-row{display:flex;gap:5px;}
+    .seed-input{flex:1;padding:7px 9px;font-family:'Crimson Text',serif;font-size:0.92rem;color:var(--ink);background:var(--parchment-dark);border:1px solid var(--parchment-darker);border-radius:2px;outline:none;}
     .seed-input:focus{border-color:var(--accent-gold);}
-
-    .seed-random-btn{
-      padding:8px 10px;
-      background:var(--parchment-darker);
-      border:1px solid var(--ink-faded);
-      border-radius:2px;
-      cursor:pointer;
-      font-size:0.9rem;
-      color:var(--ink-soft);
-      transition:background 0.2s;
-    }
-
-    .seed-random-btn:hover{background:var(--accent-gold);color:var(--ink);}
-
-    /* Generate button */
-    .generate-btn{
-      width:100%;
-      margin-top:20px;
-      padding:14px;
-      background:var(--accent);
-      color:var(--parchment);
-      border:2px solid #5a1010;
-      border-radius:3px;
-      font-family:'Cinzel',serif;
-      font-size:1rem;
-      font-weight:600;
-      letter-spacing:0.1em;
-      cursor:pointer;
-      transition:background 0.2s, transform 0.1s, box-shadow 0.2s;
-      box-shadow:2px 2px 8px var(--shadow);
-      text-transform:uppercase;
-      position:relative;
-      overflow:hidden;
-    }
-
-    .generate-btn:hover{
-      background:#a02828;
-      box-shadow:3px 3px 14px var(--shadow);
-    }
-
-    .generate-btn:active{transform:scale(0.98);}
-    .generate-btn.loading{pointer-events:none;opacity:0.8;}
-
-    /* Export button */
-    .export-btn{
-      width:100%;
-      margin-top:8px;
-      padding:10px;
-      background:transparent;
-      color:var(--ink-soft);
-      border:1px solid var(--parchment-darker);
-      border-radius:3px;
-      font-family:'Cinzel',serif;
-      font-size:0.8rem;
-      font-weight:600;
-      letter-spacing:0.08em;
-      cursor:pointer;
-      transition:all 0.2s;
-      text-transform:uppercase;
-    }
-
+    .icon-btn{padding:7px 10px;background:var(--parchment-darker);border:1px solid var(--ink-faded);border-radius:2px;cursor:pointer;font-size:0.9rem;color:var(--ink-soft);transition:background 0.2s;}
+    .icon-btn:hover{background:var(--accent-gold);color:var(--ink);}
+    .generate-btn{width:100%;margin-top:14px;padding:13px;background:var(--accent);color:var(--parchment);border:2px solid #5a1010;border-radius:3px;font-family:'Cinzel',serif;font-size:0.95rem;font-weight:600;letter-spacing:0.1em;cursor:pointer;transition:background 0.2s,transform 0.1s;box-shadow:2px 2px 8px var(--shadow);text-transform:uppercase;}
+    .generate-btn:hover{background:#a02828;}.generate-btn:active{transform:scale(0.98);}
+    .export-btn{width:100%;margin-top:7px;padding:9px;background:transparent;color:var(--ink-soft);border:1px solid var(--parchment-darker);border-radius:3px;font-family:'Cinzel',serif;font-size:0.75rem;font-weight:600;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
     .export-btn:hover{background:var(--parchment-darker);color:var(--ink);}
-
-    /* Map container */
-    .map-container{
-      background:var(--parchment);
-      border:3px solid var(--parchment-darker);
-      border-radius:4px;
-      box-shadow:6px 6px 24px var(--shadow), inset 0 0 60px rgba(200,150,42,0.1);
-      position:relative;
-      overflow:hidden;
-      animation:fadeUp 0.8s 0.2s ease both;
-    }
-
-    .map-container::before{
-      content:'';
-      position:absolute;
-      inset:6px;
-      border:1px solid var(--parchment-darker);
-      pointer-events:none;
-      z-index:10;
-      opacity:0.6;
-    }
-
-    canvas{
-      display:block;
-      width:100%;
-      height:auto;
-    }
-
-    /* Map legend */
-    .map-legend{
-      position:absolute;
-      bottom:20px;
-      right:20px;
-      background:rgba(244,228,193,0.92);
-      border:1px solid var(--parchment-darker);
-      padding:10px 12px;
-      border-radius:2px;
-      z-index:20;
-      min-width:110px;
-    }
-
-    .legend-title{
-      font-family:'Cinzel',serif;
-      font-size:0.65rem;
-      font-weight:600;
-      color:var(--ink-soft);
-      letter-spacing:0.1em;
-      text-transform:uppercase;
-      margin-bottom:6px;
-      text-align:center;
-    }
-
-    .legend-item{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      font-size:0.75rem;
-      color:var(--ink-soft);
-      margin-bottom:3px;
-      font-family:'Crimson Text',serif;
-    }
-
-    .legend-swatch{
-      width:14px;
-      height:14px;
-      border-radius:2px;
-      border:1px solid rgba(44,24,16,0.2);
-      flex-shrink:0;
-    }
-
-    /* Map compass */
-    .map-compass{
-      position:absolute;
-      top:20px;
-      right:20px;
-      z-index:20;
-      font-size:2.2rem;
-      color:var(--ink-soft);
-      text-shadow:1px 1px 0 var(--parchment);
-      opacity:0.7;
-      user-select:none;
-    }
-
-    /* Map title overlay */
-    .map-title-overlay{
-      position:absolute;
-      top:16px;
-      left:0;
-      right:0;
-      text-align:center;
-      z-index:20;
-      pointer-events:none;
-    }
-
-    .map-title-text{
-      font-family:'Cinzel',serif;
-      font-size:clamp(0.9rem,2.5vw,1.3rem);
-      font-weight:700;
-      color:var(--ink);
-      text-shadow:1px 1px 0 var(--parchment);
-      letter-spacing:0.08em;
-    }
-
-    /* Empty state */
-    .map-empty{
-      position:absolute;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      color:var(--ink-faded);
-      text-align:center;
-      padding:40px;
-    }
-
-    .map-empty-icon{font-size:3rem;margin-bottom:12px;opacity:0.5;}
-
-    .map-empty-text{
-      font-family:'Cinzel',serif;
-      font-size:1rem;
-      letter-spacing:0.06em;
-      opacity:0.7;
-    }
-
-    .map-empty-sub{
-      font-style:italic;
-      font-size:0.88rem;
-      margin-top:6px;
-      opacity:0.5;
-    }
-
-    /* Info bar */
-    .info-bar{
-      margin-top:10px;
-      padding:8px 14px;
-      background:rgba(244,228,193,0.15);
-      border:1px solid rgba(200,150,42,0.2);
-      border-radius:3px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      flex-wrap:wrap;
-      gap:8px;
-      animation:fadeUp 0.8s 0.3s ease both;
-    }
-
-    .info-text{
-      font-family:'Crimson Text',serif;
-      font-style:italic;
-      font-size:0.85rem;
-      color:var(--ink-faded);
-    }
-
-    .seed-display{
-      font-family:'Crimson Text',serif;
-      font-size:0.8rem;
-      color:var(--ink-faded);
-    }
-
+    .section-divider{border:none;border-top:1px solid var(--parchment-darker);margin:10px 0;}
+    .town-list{max-height:150px;overflow-y:auto;margin-top:5px;}
+    .town-item{display:flex;align-items:center;gap:5px;margin-bottom:5px;}
+    .town-item input{flex:1;padding:4px 7px;font-family:'Crimson Text',serif;font-size:0.88rem;color:var(--ink);background:var(--parchment-dark);border:1px solid var(--parchment-darker);border-radius:2px;outline:none;}
+    .town-item input:focus{border-color:var(--accent-gold);}
+    .town-dot{width:9px;height:9px;background:var(--ink);flex-shrink:0;border-radius:50%;}
+    .town-dot.city{border-radius:0;}
+    .map-wrap{animation:fadeUp 0.8s 0.2s ease both;}
+    .map-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+    .zoom-btn{padding:7px 13px;background:rgba(244,228,193,0.1);border:1px solid rgba(200,150,42,0.28);border-radius:3px;color:var(--accent-gold);font-family:'Cinzel',serif;font-size:0.8rem;cursor:pointer;transition:background 0.2s;}
+    .zoom-btn:hover{background:rgba(200,150,42,0.2);}
+    .zoom-label{font-family:'Cinzel',serif;font-size:0.76rem;color:var(--ink-faded);min-width:46px;text-align:center;}
+    .map-container{background:var(--parchment);border:3px solid var(--parchment-darker);border-radius:4px;box-shadow:6px 6px 24px var(--shadow);position:relative;overflow:hidden;cursor:crosshair;}
+    .map-container::before{content:'';position:absolute;inset:6px;border:1px solid var(--parchment-darker);pointer-events:none;z-index:10;opacity:0.45;}
+    #mapCanvas{display:block;transform-origin:top left;}
+    .map-compass{position:absolute;top:16px;right:16px;z-index:20;font-size:1.9rem;color:var(--ink-soft);opacity:0.6;pointer-events:none;text-shadow:1px 1px 0 var(--parchment);user-select:none;}
+    .map-title-overlay{position:absolute;top:13px;left:0;right:0;text-align:center;z-index:20;pointer-events:none;}
+    .map-title-text{font-family:'Cinzel',serif;font-size:clamp(0.82rem,2vw,1.15rem);font-weight:700;color:var(--ink);text-shadow:1px 1px 0 var(--parchment);letter-spacing:0.08em;}
+    .map-legend{position:absolute;bottom:14px;right:14px;background:rgba(244,228,193,0.94);border:1px solid var(--parchment-darker);padding:8px 10px;border-radius:2px;z-index:20;min-width:95px;}
+    .legend-title{font-family:'Cinzel',serif;font-size:0.6rem;font-weight:600;color:var(--ink-soft);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;text-align:center;}
+    .legend-item{display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--ink-soft);margin-bottom:2px;font-family:'Crimson Text',serif;}
+    .legend-swatch{width:13px;height:13px;border-radius:2px;border:1px solid rgba(44,24,16,0.15);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;}
+    .map-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink-faded);text-align:center;padding:40px;}
+    .map-empty-icon{font-size:3rem;margin-bottom:12px;opacity:0.38;}
+    .map-empty-text{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:0.06em;opacity:0.6;}
+    .map-empty-sub{font-style:italic;font-size:0.83rem;margin-top:5px;opacity:0.42;}
+    .info-bar{margin-top:8px;padding:7px 12px;background:rgba(244,228,193,0.09);border:1px solid rgba(200,150,42,0.16);border-radius:3px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px;}
+    .info-text{font-style:italic;font-size:0.8rem;color:var(--ink-faded);}
+    .seed-display{font-size:0.76rem;color:var(--ink-faded);}
+    .rename-tooltip{position:absolute;z-index:50;background:var(--parchment);border:1.5px solid var(--accent-gold);border-radius:3px;padding:6px 8px;box-shadow:2px 2px 10px var(--shadow);display:none;flex-direction:column;gap:5px;min-width:155px;}
+    .rename-tooltip input{padding:5px 7px;font-family:'Crimson Text',serif;font-size:0.9rem;color:var(--ink);background:var(--parchment-dark);border:1px solid var(--parchment-darker);border-radius:2px;outline:none;width:100%;}
+    .rename-tooltip input:focus{border-color:var(--accent-gold);}
+    .rename-btns{display:flex;gap:4px;}
+    .rename-ok{flex:1;padding:4px;background:var(--accent);color:var(--parchment);border:none;border-radius:2px;font-family:'Cinzel',serif;font-size:0.68rem;cursor:pointer;}
+    .rename-cancel{flex:1;padding:4px;background:var(--parchment-darker);color:var(--ink);border:none;border-radius:2px;font-family:'Cinzel',serif;font-size:0.68rem;cursor:pointer;}
     @keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:var(--parchment-dark);}::-webkit-scrollbar-thumb{background:var(--parchment-darker);border-radius:3px;}
   </style>
 </head>
 <body>
 <div class="page">
   <header>
     <div class="site-title">⚔ Realm Forge ⚔</div>
-    <div class="divider">
-      <div class="divider-line"></div>
-      <div class="divider-icon">✦</div>
-      <div class="divider-line"></div>
-    </div>
-    <div class="site-subtitle">Fantasy Map Generator for TTRPGs &amp; World Building</div>
+    <div class="divider"><div class="divider-line"></div><div class="divider-icon">✦</div><div class="divider-line"></div></div>
+    <div class="site-sub">Fantasy Map Generator for TTRPGs &amp; World Building</div>
   </header>
-
   <div class="main-layout">
-    <!-- Controls -->
     <div class="controls-panel">
       <div class="panel-title">⚙ Map Parameters</div>
-
-      <div class="control-group">
-        <label class="control-label">Map Size</label>
+      <div class="control-group"><label class="control-label">🗺 Map Size</label>
         <select id="mapSize">
           <option value="small">Small — Dungeon / Town</option>
           <option value="medium" selected>Medium — Region / Province</option>
           <option value="large">Large — Full Continent</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label class="control-label">Land Mass Type</label>
+        </select></div>
+      <div class="control-group"><label class="control-label">🌍 Land Mass Shape</label>
         <select id="landType">
-          <option value="continent">Continent</option>
-          <option value="island">Island / Archipelago</option>
-          <option value="peninsula">Peninsula</option>
-          <option value="inland">Inland Region</option>
-          <option value="random">Random</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label class="control-label">Primary Terrain</label>
+          <option value="continent">Continent</option><option value="island">Island</option>
+          <option value="archipelago">Archipelago</option><option value="peninsula">Peninsula</option>
+          <option value="inland">Inland Region</option><option value="coastal">Coastal Region</option>
+          <option value="atoll">Atoll</option><option value="fjord">Fjord Coast</option>
+          <option value="delta">River Delta</option><option value="random">Random</option>
+        </select></div>
+      <div class="control-group"><label class="control-label">⛰ Primary Terrain</label>
         <select id="terrain">
-          <option value="mixed">Mixed Terrain</option>
-          <option value="forest">Dense Forest</option>
-          <option value="mountains">Mountain Range</option>
-          <option value="desert">Arid Desert</option>
-          <option value="plains">Rolling Plains</option>
-          <option value="tundra">Frozen Tundra</option>
-          <option value="swamp">Swampland</option>
-          <option value="volcanic">Volcanic Wastes</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label class="control-label">Water Bodies</label>
+          <option value="mixed">Mixed Terrain</option><option value="forest">Dense Forest</option>
+          <option value="mountains">Mountain Range</option><option value="desert">Arid Desert</option>
+          <option value="plains">Rolling Plains</option><option value="tundra">Frozen Tundra</option>
+          <option value="swamp">Swampland</option><option value="volcanic">Volcanic Wastes</option>
+          <option value="jungle">Jungle / Rainforest</option><option value="savanna">Savanna</option>
+          <option value="tidal">Tidal Flats</option>
+        </select></div>
+      <div class="control-group"><label class="control-label">💧 Water Bodies</label>
         <select id="water">
           <option value="moderate">Moderate — Rivers &amp; Lakes</option>
           <option value="abundant">Abundant — Many Waterways</option>
           <option value="coastal">Coastal — Ocean Borders</option>
-          <option value="rivers">Rivers Only</option>
-          <option value="lakes">Lakes &amp; Ponds Only</option>
+          <option value="rivers">Rivers Only</option><option value="lakes">Lakes &amp; Ponds Only</option>
           <option value="arid">Arid — Minimal Water</option>
           <option value="archipelago">Archipelago — Many Seas</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label class="control-label">Settlements</label>
+        </select></div>
+      <div class="control-group"><label class="control-label">🏘 Settlements</label>
         <select id="settlements">
-          <option value="few">Few — Wilderness</option>
+          <option value="none">None — Untamed Wild</option><option value="few">Few — Wilderness</option>
           <option value="moderate" selected>Moderate — Settled Land</option>
           <option value="many">Many — Civilized Region</option>
-          <option value="none">None — Untamed Wild</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label class="control-label">Map Seed (optional)</label>
+        </select></div>
+      <div class="control-group"><label class="control-label">🌤 Climate</label>
+        <select id="climate">
+          <option value="temperate">Temperate</option><option value="tropical">Tropical</option>
+          <option value="arctic">Arctic / Frozen</option><option value="arid">Arid / Dry</option>
+          <option value="stormy">Stormy / Turbulent</option><option value="magical">Magical / Unnatural</option>
+        </select></div>
+      <div class="control-group"><label class="control-label">⚔ Era / Age</label>
+        <select id="era">
+          <option value="medieval">Medieval Fantasy</option><option value="ancient">Ancient / Mythic</option>
+          <option value="dark">Dark Ages</option><option value="renaissance">Renaissance</option>
+          <option value="apocalyptic">Post-Apocalyptic</option><option value="magitech">Magitech / Arcane</option>
+        </select></div>
+      <div class="control-group"><label class="control-label">🎲 Map Seed</label>
         <div class="seed-row">
           <input type="text" class="seed-input" id="seedInput" placeholder="e.g. 42069"/>
-          <button class="seed-random-btn" id="randomSeedBtn" title="Random seed">🎲</button>
-        </div>
-      </div>
-
-      <button class="generate-btn" id="generateBtn">⚔ Generate Map</button>
+          <button class="icon-btn" id="randomSeedBtn">🎲</button>
+        </div></div>
+      <button class="generate-btn" id="generateBtn">⚔ Forge Realm</button>
       <button class="export-btn" id="exportBtn">↓ Save as Image</button>
+      <hr class="section-divider"/>
+      <div class="control-group"><label class="control-label">✏ Edit Settlement Names</label>
+        <div class="town-list" id="townList">
+          <div style="font-style:italic;font-size:0.8rem;color:var(--ink-faded);text-align:center;padding:8px;">Generate a map first</div>
+        </div></div>
     </div>
-
-    <!-- Map -->
-    <div>
+    <div class="map-wrap">
+      <div class="map-toolbar">
+        <button class="zoom-btn" id="zoomIn">＋ Zoom In</button>
+        <button class="zoom-btn" id="zoomOut">－ Zoom Out</button>
+        <button class="zoom-btn" id="zoomReset">↺ Reset</button>
+        <span class="zoom-label" id="zoomLabel">100%</span>
+        <span style="font-family:'Crimson Text',serif;font-style:italic;font-size:0.78rem;color:var(--ink-faded);">Tap a settlement to rename</span>
+      </div>
       <div class="map-container" id="mapContainer">
         <canvas id="mapCanvas"></canvas>
         <div class="map-empty" id="mapEmpty">
@@ -526,440 +175,389 @@
           <div class="legend-title">Legend</div>
           <div id="legendItems"></div>
         </div>
+        <div class="rename-tooltip" id="renameTooltip">
+          <input type="text" id="renameInput" placeholder="New name…"/>
+          <div class="rename-btns">
+            <button class="rename-ok" id="renameOk">✓ Rename</button>
+            <button class="rename-cancel" id="renameCancel">✕</button>
+          </div>
+        </div>
       </div>
-
       <div class="info-bar">
-        <div class="info-text" id="infoText">Choose your parameters and generate a map to begin your adventure.</div>
+        <div class="info-text" id="infoText">Choose your parameters and forge a world.</div>
         <div class="seed-display" id="seedDisplay"></div>
       </div>
     </div>
   </div>
 </div>
-
 <script>
-// ─── Seeded RNG (Mulberry32) ───────────────────────────────────────────────
-function createRNG(seed) {
-  let s = seed >>> 0;
-  return function() {
-    s += 0x6D2B79F5;
-    let t = Math.imul(s ^ s >>> 15, 1 | s);
-    t ^= t + Math.imul(t ^ t >>> 7, 61 | t);
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
+function createRNG(seed){let s=seed>>>0;return function(){s+=0x6D2B79F5;let t=Math.imul(s^s>>>15,1|s);t^=t+Math.imul(t^t>>>7,61|t);return((t^t>>>14)>>>0)/4294967296;};}
+function makeNoise(rng,w,h){const g=[];for(let y=0;y<h;y++){g[y]=[];for(let x=0;x<w;x++)g[y][x]=rng();}function lerp(a,b,t){return a+(b-a)*t;}function sm(t){return t*t*(3-2*t);}return function(x,y){const xi=Math.floor(x)%w,yi=Math.floor(y)%h,xf=x-Math.floor(x),yf=y-Math.floor(y),x1=(xi+1)%w,y1=(yi+1)%h;return lerp(lerp(g[yi][xi],g[yi][x1],sm(xf)),lerp(g[y1][xi],g[y1][x1],sm(xf)),sm(yf));};}
+function fbm(n,x,y,o=5){let v=0,a=0.5,f=1,m=0;for(let i=0;i<o;i++){v+=n(x*f,y*f)*a;m+=a;a*=0.5;f*=2;}return v/m;}
+function hashStr(s){let h=0;for(let i=0;i<s.length;i++)h=Math.imul(31,h)+s.charCodeAt(i)|0;return Math.abs(h);}
+
+const PRE=['Aether','Brim','Cael','Drak','Eld','Fae','Grim','Helm','Iron','Jade','Kael','Lorn','Mor','Neth','Orm','Pyre','Quel','Raven','Stone','Thorn','Ul','Vale','Wych','Xan','Yor','Zeph','Ash','Black','Cold','Dawn','Ever','Frost','Gold','High','King','Lake','Mist','Night','Oak','Pine'];
+const SUF=['haven','moor','fell','reach','hold','gate','shire','mere','wald','dun','heim','keep','vale','ford','mark','fen','spire','watch','crest','deep','brook','cliff','dale','edge','field','glen','grove','hill','knoll','lake','marsh','peak','ridge','rock','run','side','stead','tor','way','wood'];
+const TOWNS=['Ashford','Brackwater','Coldmere','Dusthaven','Elderwick','Frostgate','Grimhold','Harrowfen','Ironspire','Jadekeep','Kaldrath','Lornswick','Mirefall','Nethgate','Oldwatch','Pyremont','Quelford','Ravenstone','Stonegate','Thornwick','Ulvenmoor','Valeford','Wychwood','Xandrel','Yorkstead','Zephyrhold','Ashwick','Blackmere','Cresthold','Dustwick','Embervale','Frostwick','Goldfen','Highkeep','Irondale','Jadewood','Keldmoor','Lorndell','Mirehaven','Netherford'];
+const RUINS=['The Shattered Keep','Tomb of Aelvar','Ruins of Drakmore','The Sunken Temple','Cradle of Shadows','Void Citadel','The Forgotten Spire','Necropolis of Grim','The Broken Gate','Obelisk of Xan'];
+const CASTLES=['Ironhold Fortress','Drakenmoor Castle','High Aerie Keep','Stormwatch Citadel','Embercrown Bastion','Thornwall Castle','Voidstone Keep','Goldspire Tower','Nightwatch Fortress','Bleakwall Stronghold'];
+
+const canvas=document.getElementById('mapCanvas'),ctx=canvas.getContext('2d');
+const SIZES={small:{w:600,h:450},medium:{w:800,h:600},large:{w:1000,h:750}};
+let zoom=1,settlements=[],lastSizeKey='medium',baseImg=null,renamingIdx=-1;
+
+function applyZoom(){
+  canvas.style.transform=`scale(${zoom})`;
+  canvas.style.transformOrigin='top left';
+  const sz=SIZES[lastSizeKey];
+  document.getElementById('mapContainer').style.height=(sz.h*zoom)+'px';
+  document.getElementById('zoomLabel').textContent=Math.round(zoom*100)+'%';
+}
+document.getElementById('zoomIn').onclick=()=>{zoom=Math.min(3,+(zoom+0.25).toFixed(2));applyZoom();};
+document.getElementById('zoomOut').onclick=()=>{zoom=Math.max(0.25,+(zoom-0.25).toFixed(2));applyZoom();};
+document.getElementById('zoomReset').onclick=()=>{zoom=1;applyZoom();};
+
+const tooltip=document.getElementById('renameTooltip'),renameInput=document.getElementById('renameInput');
+document.getElementById('mapContainer').addEventListener('click',e=>{
+  if(tooltip.style.display==='flex'){tooltip.style.display='none';return;}
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)/zoom,my=(e.clientY-rect.top)/zoom;
+  for(let i=0;i<settlements.length;i++){
+    const s=settlements[i];
+    if(Math.sqrt((s.x-mx)**2+(s.y-my)**2)<18){
+      renamingIdx=i;renameInput.value=s.name;
+      tooltip.style.display='flex';
+      tooltip.style.left=(s.x*zoom+10)+'px';
+      tooltip.style.top=(s.y*zoom-24)+'px';
+      renameInput.focus();return;
+    }
+  }
+});
+document.getElementById('renameOk').onclick=()=>{if(renamingIdx>=0){settlements[renamingIdx].name=renameInput.value;redraw();refreshList();}tooltip.style.display='none';};
+document.getElementById('renameCancel').onclick=()=>{tooltip.style.display='none';};
+renameInput.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('renameOk').click();});
+
+function refreshList(){
+  const list=document.getElementById('townList');
+  if(!settlements.length){list.innerHTML='<div style="font-style:italic;font-size:0.8rem;color:var(--ink-faded);text-align:center;padding:8px;">No settlements on map</div>';return;}
+  list.innerHTML=settlements.map((s,i)=>`<div class="town-item"><div class="town-dot ${s.isCity?'city':''}"></div><input type="text" value="${s.name}" data-idx="${i}" class="tni"/></div>`).join('');
+  list.querySelectorAll('.tni').forEach(inp=>inp.addEventListener('change',e=>{settlements[+e.target.dataset.idx].name=e.target.value;redraw();}));
 }
 
-// ─── Noise (simple value noise) ───────────────────────────────────────────
-function makeNoise(rng, w, h) {
-  const grid = [];
-  for(let y=0;y<h;y++){grid[y]=[];for(let x=0;x<w;x++) grid[y][x]=rng();}
-  function lerp(a,b,t){return a+(b-a)*t;}
-  function smooth(t){return t*t*(3-2*t);}
-  return function(x,y) {
-    const xi=Math.floor(x)%w, yi=Math.floor(y)%h;
-    const xf=x-Math.floor(x), yf=y-Math.floor(y);
-    const x1=(xi+1)%w, y1=(yi+1)%h;
-    return lerp(
-      lerp(grid[yi][xi],grid[yi][x1],smooth(xf)),
-      lerp(grid[y1][xi],grid[y1][x1],smooth(xf)),
-      smooth(yf)
-    );
-  };
+function redraw(){
+  if(!baseImg)return;
+  ctx.putImageData(baseImg,0,0);
+  drawAllFeatures();
+  drawSettlements();
 }
 
-function fbm(noise,x,y,octaves=5){
-  let v=0,amp=0.5,freq=1,max=0;
-  for(let i=0;i<octaves;i++){v+=noise(x*freq,y*freq)*amp;max+=amp;amp*=0.5;freq*=2;}
-  return v/max;
-}
+let featureFns=[];
+function drawAllFeatures(){featureFns.forEach(f=>f());}
 
-// ─── Map names ────────────────────────────────────────────────────────────
-const PREFIXES=['Aether','Brim','Cael','Drak','Eld','Fae','Grim','Helm','Iron','Jade','Kael','Lorn','Mor','Neth','Orm','Pyre','Quel','Raven','Stone','Thorn','Ul','Vale','Wych','Xan','Yor','Zeph'];
-const SUFFIXES=['haven','moor','fell','reach','hold','gate','shire','mere','wald','dun','heim','keep','vale','ford','mark','fen','spire','watch','crest','deep'];
-
-const SETTLEMENT_NAMES=['Ashford','Brackwater','Coldmere','Dusthaven','Elderwick','Frostgate','Grimhold','Harrowfen','Ironspire','Jadekeep','Kaldrath','Lornswick','Mirefall','Nethgate','Oldwatch','Pyremont','Quelford','Ravenstone','Stonegate','Thornwick','Ulvenmoor','Valeford','Wychwood','Xandrel','Yorkstead','Zephyrhold','Ashwick','Blackmere','Cresthold','Dustwick'];
-
-// ─── Canvas setup ─────────────────────────────────────────────────────────
-const canvas = document.getElementById('mapCanvas');
-const ctx = canvas.getContext('2d');
-const SIZES = { small:{w:600,h:450,label:'Dungeon / Town'}, medium:{w:800,h:600,label:'Region / Province'}, large:{w:1000,h:750,label:'Full Continent'} };
-
-let lastSeed = null;
-
-// ─── Main generator ───────────────────────────────────────────────────────
-function generateMap() {
-  const sizeKey = document.getElementById('mapSize').value;
-  const landType = document.getElementById('landType').value;
-  const terrain = document.getElementById('terrain').value;
-  const waterType = document.getElementById('water').value;
-  const settlements = document.getElementById('settlements').value;
-  const seedVal = document.getElementById('seedInput').value.trim();
-
-  const seed = seedVal ? hashStr(seedVal) : Math.floor(Math.random()*2147483647);
-  lastSeed = seed;
-  document.getElementById('seedInput').value = seed;
-  document.getElementById('seedDisplay').textContent = `Seed: ${seed}`;
-
-  const rng = createRNG(seed);
-  const sz = SIZES[sizeKey];
-  canvas.width = sz.w;
-  canvas.height = sz.h;
-
-  // Hide empty state, show map elements
-  document.getElementById('mapEmpty').style.display = 'none';
-  document.getElementById('mapCompass').style.display = 'block';
-  document.getElementById('mapTitleOverlay').style.display = 'block';
-  document.getElementById('mapLegend').style.display = 'block';
-
-  // Generate map name
-  const mapName = PREFIXES[Math.floor(rng()*PREFIXES.length)] + SUFFIXES[Math.floor(rng()*SUFFIXES.length)];
-  document.getElementById('mapTitleText').textContent = `The Realm of ${mapName}`;
-
-  const W = sz.w, H = sz.h;
-
-  // ── Generate heightmap ──
-  const noiseGrid = makeNoise(rng, 64, 64);
-  const heightmap = [];
-  for(let y=0;y<H;y++){
-    heightmap[y]=[];
-    for(let x=0;x<W;x++){
-      const nx=x/W*8, ny=y/H*8;
-      let h = fbm(noiseGrid,nx,ny,6);
-      // Apply land type shaping
-      if(landType==='island'||landType==='archipelago'){
-        const dx=(x/W-0.5)*2, dy=(y/H-0.5)*2;
-        const dist=Math.sqrt(dx*dx+dy*dy);
-        h -= dist*0.7;
-      } else if(landType==='peninsula'){
-        const dx=x/W, dy=(y/H-0.5)*2;
-        h -= Math.abs(dy)*0.4 + (1-dx)*0.3;
-      } else if(landType==='coastal'){
-        h -= (1-x/W)*0.5;
-      } else if(landType==='inland'){
-        const dx=(x/W-0.5)*2, dy=(y/H-0.5)*2;
-        h += 0.2 - Math.sqrt(dx*dx+dy*dy)*0.15;
-      }
-      heightmap[y][x]=Math.max(0,Math.min(1,h));
-    }
-  }
-
-  // Water threshold
-  let waterThresh = 0.42;
-  if(waterType==='arid') waterThresh=0.3;
-  else if(waterType==='abundant'||waterType==='archipelago') waterThresh=0.52;
-  else if(waterType==='coastal') waterThresh=0.45;
-
-  // ── Draw base parchment ──
-  const parchment = ctx.createLinearGradient(0,0,W,H);
-  parchment.addColorStop(0,'#f5e6c4');
-  parchment.addColorStop(0.3,'#f0ddb5');
-  parchment.addColorStop(0.7,'#ecdaa8');
-  parchment.addColorStop(1,'#e8d49e');
-  ctx.fillStyle = parchment;
-  ctx.fillRect(0,0,W,H);
-
-  // Parchment texture noise
-  for(let i=0;i<W*H*0.15;i++){
-    const px=Math.floor(rng()*W), py=Math.floor(rng()*H);
-    const a=rng()*0.06;
-    ctx.fillStyle=`rgba(${rng()>0.5?180:140},${rng()>0.5?130:100},60,${a})`;
-    ctx.fillRect(px,py,1+(rng()*2|0),1+(rng()*2|0));
-  }
-
-  // ── Draw terrain ──
-  const imgData = ctx.getImageData(0,0,W,H);
-  const data = imgData.data;
-
-  for(let y=0;y<H;y++){
-    for(let x=0;x<W;x++){
-      const h=heightmap[y][x];
-      const i=(y*W+x)*4;
-      let r,g,b,a=255;
-
-      if(h < waterThresh-0.08){
-        // Deep water
-        r=60;g=90;b=130;
-      } else if(h < waterThresh){
-        // Shallow water
-        r=100;g=140;b=170;
-      } else {
-        // Land — apply terrain coloring
-        const landH=(h-waterThresh)/(1-waterThresh);
-        switch(terrain){
-          case 'forest':
-            r=Math.floor(60+landH*30);g=Math.floor(90+landH*40);b=Math.floor(50+landH*20);break;
-          case 'mountains':
-            if(landH>0.65){r=200;g=195;b=190;}
-            else if(landH>0.4){r=140;g=120;b=100;}
-            else{r=120;g=140;b=90;}
-            break;
-          case 'desert':
-            r=Math.floor(195+landH*40);g=Math.floor(160+landH*30);b=Math.floor(80+landH*20);break;
-          case 'tundra':
-            r=Math.floor(200+landH*50);g=Math.floor(210+landH*40);b=Math.floor(220+landH*30);break;
-          case 'swamp':
-            r=Math.floor(70+landH*30);g=Math.floor(90+landH*40);b=Math.floor(60+landH*20);break;
-          case 'volcanic':
-            if(landH>0.7){r=220;g=80;b=30;}
-            else{r=Math.floor(60+landH*50);g=Math.floor(40+landH*30);b=Math.floor(40+landH*20);}
-            break;
-          case 'plains':
-            r=Math.floor(160+landH*40);g=Math.floor(170+landH*30);b=Math.floor(80+landH*20);break;
-          default: // mixed
-            if(landH>0.75){r=180;g=175;b=170;}
-            else if(landH>0.5){r=130;g=115;b=90;}
-            else if(landH>0.25){r=100;g=130;b=75;}
-            else{r=140;g=160;b=100;}
-        }
-        // Blend toward parchment
-        const blend=0.38;
-        r=Math.floor(r*(1-blend)+210*blend);
-        g=Math.floor(g*(1-blend)+185*blend);
-        b=Math.floor(b*(1-blend)+140*blend);
-      }
-
-      data[i]=r; data[i+1]=g; data[i+2]=b; data[i+3]=a;
-    }
-  }
-  ctx.putImageData(imgData,0,0);
-
-  // ── Draw rivers ──
-  if(waterType!=='arid'&&waterType!=='lakes'){
-    const numRivers = waterType==='abundant'||waterType==='rivers'?6:3;
-    ctx.strokeStyle='rgba(80,120,160,0.7)';
-    for(let r=0;r<numRivers;r++){
-      // Find high point to start river
-      let sx=Math.floor(rng()*W*0.6+W*0.2);
-      let sy=Math.floor(rng()*H*0.3);
-      // Make sure start is on land
-      if(heightmap[sy]&&heightmap[sy][sx]<waterThresh+0.1) continue;
-      ctx.beginPath();
-      ctx.moveTo(sx,sy);
-      let cx2=sx,cy2=sy;
-      for(let step=0;step<200;step++){
-        // Flow downhill with some meandering
-        let bestX=cx2,bestY=cy2,bestH=heightmap[cy2]&&heightmap[cy2][cx2]||0;
-        const dirs=[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]];
-        for(const [dx2,dy2] of dirs){
-          const nx2=cx2+dx2,ny2=cy2+dy2;
-          if(nx2<0||nx2>=W||ny2<0||ny2>=H) continue;
-          const nh=heightmap[ny2][nx2];
-          if(nh<bestH){bestH=nh;bestX=nx2;bestY=ny2;}
-        }
-        // Add slight meander
-        bestX+=Math.floor((rng()-0.5)*4);
-        bestX=Math.max(0,Math.min(W-1,bestX));
-        cx2=bestX;cy2=bestY;
-        const wid=(heightmap[cy2][cx2]<waterThresh)?3:1.2;
-        ctx.lineWidth=wid;
-        ctx.lineTo(cx2,cy2);
-        if(heightmap[cy2][cx2]<waterThresh-0.05) break;
-      }
-      ctx.stroke();
-    }
-  }
-
-  // ── Draw lakes ──
-  if(waterType==='lakes'||waterType==='moderate'||waterType==='abundant'){
-    const numLakes = waterType==='abundant'?5:waterType==='lakes'?6:2;
-    for(let l=0;l<numLakes;l++){
-      const lx=Math.floor(rng()*W*0.7+W*0.15);
-      const ly=Math.floor(rng()*H*0.7+H*0.15);
-      if(heightmap[ly]&&heightmap[ly][lx]<waterThresh+0.05) continue;
-      const lw=Math.floor(20+rng()*50), lh2=Math.floor(15+rng()*35);
-      ctx.fillStyle='rgba(80,130,170,0.65)';
-      ctx.strokeStyle='rgba(60,100,140,0.5)';
-      ctx.lineWidth=1.5;
-      ctx.beginPath();
-      ctx.ellipse(lx,ly,lw,lh2,rng()*Math.PI,0,Math.PI*2);
-      ctx.fill();ctx.stroke();
-    }
-  }
-
-  // ── Draw mountain symbols ──
-  const drawMountain=(mx,my,size)=>{
-    ctx.strokeStyle='rgba(60,40,20,0.6)';
-    ctx.fillStyle='rgba(150,130,110,0.4)';
-    ctx.lineWidth=1;
-    // Main peak
-    ctx.beginPath();
-    ctx.moveTo(mx,my-size);
-    ctx.lineTo(mx-size*0.8,my+size*0.4);
-    ctx.lineTo(mx+size*0.8,my+size*0.4);
-    ctx.closePath();ctx.fill();ctx.stroke();
-    // Snow cap
-    ctx.fillStyle='rgba(240,238,235,0.7)';
-    ctx.beginPath();
-    ctx.moveTo(mx,my-size);
-    ctx.lineTo(mx-size*0.25,my-size*0.45);
-    ctx.lineTo(mx+size*0.25,my-size*0.45);
-    ctx.closePath();ctx.fill();
-  };
-
-  if(terrain==='mountains'||terrain==='mixed'||terrain==='volcanic'){
-    const numMts = terrain==='mountains'?25:12;
-    for(let m=0;m<numMts;m++){
-      const mx=Math.floor(rng()*W), my=Math.floor(rng()*H);
-      if(!heightmap[my]||heightmap[my][mx]<waterThresh+0.2) continue;
-      if(heightmap[my][mx]<0.65) continue;
-      drawMountain(mx,my,8+rng()*12);
-    }
-  }
-
-  // ── Draw tree symbols ──
-  const drawTree=(tx,ty,size)=>{
-    ctx.fillStyle='rgba(50,90,40,0.55)';
-    ctx.beginPath();
-    ctx.arc(tx,ty-size*0.3,size*0.6,0,Math.PI*2);
-    ctx.fill();
-    ctx.strokeStyle='rgba(40,70,30,0.4)';
-    ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(tx,ty-size*0.3+size*0.6);ctx.lineTo(tx,ty+size*0.5);ctx.stroke();
-  };
-
-  if(terrain==='forest'||terrain==='swamp'||(terrain==='mixed'&&rng()>0.3)){
-    const numTrees=terrain==='forest'?80:terrain==='swamp'?40:30;
-    for(let t=0;t<numTrees;t++){
-      const tx=Math.floor(rng()*W), ty=Math.floor(rng()*H);
-      if(!heightmap[ty]||heightmap[ty][tx]<waterThresh+0.02) continue;
-      if(heightmap[ty][tx]>0.75) continue;
-      drawTree(tx,ty,5+rng()*5);
-    }
-  }
-
-  // ── Draw settlements ──
-  const numSettlements = settlements==='none'?0:settlements==='few'?3:settlements==='many'?12:6;
-  const usedNames=new Set();
-  const settlementList=[];
-
-  for(let s=0;s<numSettlements;s++){
-    let attempts=0;
-    while(attempts<50){
-      const sx=Math.floor(rng()*W*0.8+W*0.1);
-      const sy=Math.floor(rng()*H*0.8+H*0.1);
-      if(!heightmap[sy]||heightmap[sy][sx]<waterThresh+0.03){attempts++;continue;}
-      // Pick unique name
-      let name;
-      do{ name=SETTLEMENT_NAMES[Math.floor(rng()*SETTLEMENT_NAMES.length)]; }
-      while(usedNames.has(name));
-      usedNames.add(name);
-
-      // Draw settlement dot
-      const isCity=rng()>0.6;
-      ctx.fillStyle='rgba(44,24,16,0.85)';
-      ctx.strokeStyle='rgba(44,24,16,0.5)';
-      if(isCity){
-        ctx.lineWidth=1.5;
-        ctx.beginPath();ctx.rect(sx-4,sy-4,8,8);ctx.fill();ctx.stroke();
-      } else {
-        ctx.beginPath();ctx.arc(sx,sy,3.5,0,Math.PI*2);ctx.fill();
-      }
-
-      // Settlement name
-      ctx.font=`${isCity?'bold ':''} ${isCity?10:8.5}px 'Crimson Text', serif`;
-      ctx.fillStyle='rgba(30,15,8,0.85)';
-      ctx.textAlign='center';
-      ctx.fillText(name,sx,sy-(isCity?8:7));
-
-      settlementList.push({name,x:sx,y:sy,isCity});
-      break;
-      attempts++;
-    }
-  }
-
-  // ── Parchment edge vignette ──
-  const vignette=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.85);
-  vignette.addColorStop(0,'rgba(0,0,0,0)');
-  vignette.addColorStop(1,'rgba(44,24,16,0.35)');
-  ctx.fillStyle=vignette;
-  ctx.fillRect(0,0,W,H);
-
-  // Edge burn effect
-  const edgeBurn=ctx.createLinearGradient(0,0,0,H);
-  edgeBurn.addColorStop(0,'rgba(44,24,16,0.25)');
-  edgeBurn.addColorStop(0.05,'rgba(0,0,0,0)');
-  edgeBurn.addColorStop(0.95,'rgba(0,0,0,0)');
-  edgeBurn.addColorStop(1,'rgba(44,24,16,0.25)');
-  ctx.fillStyle=edgeBurn;
-  ctx.fillRect(0,0,W,H);
-
-  // ── Draw decorative border ──
-  ctx.strokeStyle='rgba(100,60,20,0.5)';
-  ctx.lineWidth=3;
-  ctx.strokeRect(8,8,W-16,H-16);
-  ctx.strokeStyle='rgba(100,60,20,0.25)';
-  ctx.lineWidth=1;
-  ctx.strokeRect(12,12,W-24,H-24);
-
-  // ── Corner decorations ──
-  const corners=[[14,14],[W-14,14],[14,H-14],[W-14,H-14]];
-  ctx.fillStyle='rgba(100,60,20,0.5)';
-  corners.forEach(([cx3,cy3])=>{
-    ctx.beginPath();ctx.arc(cx3,cy3,3,0,Math.PI*2);ctx.fill();
+function drawSettlements(){
+  settlements.forEach(s=>{
+    ctx.fillStyle='rgba(44,24,16,0.88)';ctx.strokeStyle='rgba(44,24,16,0.5)';
+    if(s.isCity){ctx.lineWidth=1.5;ctx.beginPath();ctx.rect(s.x-4,s.y-4,8,8);ctx.fill();ctx.stroke();}
+    else{ctx.beginPath();ctx.arc(s.x,s.y,3.5,0,Math.PI*2);ctx.fill();}
+    ctx.font=`${s.isCity?'bold ':''} ${s.isCity?10:8.5}px 'Crimson Text',serif`;
+    ctx.fillStyle='rgba(30,15,8,0.9)';ctx.textAlign='center';
+    ctx.fillText(s.name,s.x,s.y-(s.isCity?9:7));
   });
-
-  // ── Build legend ──
-  const legendItems=[];
-  if(waterType!=='arid') legendItems.push({color:'#5a8fa8',label:'Water'});
-  legendItems.push({color:terrainColor(terrain),label:terrainLabel(terrain)});
-  if(numSettlements>0) legendItems.push({color:'rgba(44,24,16,0.8)',label:'Settlement'});
-  if(terrain==='mountains'||terrain==='mixed') legendItems.push({color:'rgba(150,130,110,0.8)',label:'Mountains'});
-
-  const legendEl=document.getElementById('legendItems');
-  legendEl.innerHTML=legendItems.map(item=>`
-    <div class="legend-item">
-      <div class="legend-swatch" style="background:${item.color}"></div>
-      <span>${item.label}</span>
-    </div>
-  `).join('');
-
-  // ── Update info bar ──
-  document.getElementById('infoText').textContent=
-    `${sz.label} · ${landTypeLabel(landType)} · ${terrainLabel(terrain)} · ${settlementList.length} settlement${settlementList.length!==1?'s':''}`;
 }
 
-function terrainColor(t){
-  const map={forest:'#4a7a3a',mountains:'#7a6a5a',desert:'#c8a050',plains:'#a8b870',tundra:'#c8d8e0',swamp:'#4a5a3a',volcanic:'#603020',mixed:'#7a9060'};
-  return map[t]||'#8a9868';
+// Icon drawing
+function drawMountain(mx,my,sz,rng){
+  ctx.strokeStyle='rgba(60,40,20,0.65)';ctx.fillStyle='rgba(145,120,95,0.52)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(mx,my-sz);ctx.lineTo(mx-sz*0.85,my+sz*0.45);ctx.lineTo(mx+sz*0.85,my+sz*0.45);ctx.closePath();ctx.fill();ctx.stroke();
+  if(rng()>0.25){ctx.fillStyle='rgba(245,242,238,0.78)';ctx.beginPath();ctx.moveTo(mx,my-sz);ctx.lineTo(mx-sz*0.28,my-sz*0.42);ctx.lineTo(mx+sz*0.28,my-sz*0.42);ctx.closePath();ctx.fill();}
+}
+function drawTree(tx,ty,sz,type){
+  if(type==='jungle'||type==='swamp'){
+    ctx.fillStyle='rgba(28,78,28,0.6)';ctx.beginPath();ctx.arc(tx,ty-sz*0.2,sz*0.7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(18,58,18,0.38)';ctx.beginPath();ctx.arc(tx-sz*0.4,ty,sz*0.44,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(tx+sz*0.4,ty,sz*0.44,0,Math.PI*2);ctx.fill();
+  } else if(type==='tundra'){
+    ctx.strokeStyle='rgba(60,80,60,0.48)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(tx,ty-sz);ctx.lineTo(tx,ty+sz*0.5);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(tx-sz*0.6,ty-sz*0.2);ctx.lineTo(tx+sz*0.6,ty-sz*0.2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(tx-sz*0.38,ty+sz*0.1);ctx.lineTo(tx+sz*0.38,ty+sz*0.1);ctx.stroke();
+  } else {
+    ctx.fillStyle='rgba(50,95,40,0.55)';ctx.beginPath();ctx.moveTo(tx,ty-sz);ctx.lineTo(tx-sz*0.7,ty+sz*0.3);ctx.lineTo(tx+sz*0.7,ty+sz*0.3);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(44,84,34,0.44)';ctx.beginPath();ctx.moveTo(tx,ty-sz*0.48);ctx.lineTo(tx-sz*0.85,ty+sz*0.72);ctx.lineTo(tx+sz*0.85,ty+sz*0.72);ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(38,62,28,0.38)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(tx,ty+sz*0.5);ctx.lineTo(tx,ty+sz*0.92);ctx.stroke();
+  }
+}
+function drawSwampTuft(sx,sy,sz){
+  ctx.strokeStyle='rgba(38,68,28,0.55)';ctx.lineWidth=1;
+  for(let i=0;i<5;i++){const a=-Math.PI/2+(-0.6+i*0.3);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx+Math.cos(a)*sz,sy+Math.sin(a)*sz);ctx.stroke();}
+  ctx.fillStyle='rgba(58,88,38,0.38)';ctx.beginPath();ctx.ellipse(sx,sy,sz*0.38,sz*0.18,0,0,Math.PI*2);ctx.fill();
+}
+function drawValley(vx,vy,w,h,rng){
+  ctx.strokeStyle='rgba(80,100,58,0.38)';ctx.lineWidth=1;
+  for(let i=0;i<3;i++){const o=i*4;ctx.beginPath();ctx.ellipse(vx,vy,w-o,h-o*0.5,0,0,Math.PI*2);ctx.stroke();}
+}
+function drawRuins(rx,ry,sz){
+  ctx.strokeStyle='rgba(80,60,40,0.68)';ctx.fillStyle='rgba(118,98,78,0.38)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.rect(rx-sz,ry-sz,sz*0.58,sz*1.5);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.rect(rx+sz*0.58,ry-sz*0.5,sz*0.48,sz);ctx.fill();ctx.stroke();
+  ctx.fillStyle='rgba(78,48,28,0.58)';ctx.font=`${sz*1.2}px serif`;ctx.textAlign='center';ctx.fillText('☠',rx,ry+sz*0.3);
+}
+function drawCastle(cx,cy,sz){
+  ctx.strokeStyle='rgba(60,40,20,0.7)';ctx.fillStyle='rgba(158,138,108,0.55)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.rect(cx-sz*0.5,cy-sz*1.2,sz,sz*1.8);ctx.fill();ctx.stroke();
+  for(let i=0;i<3;i++){ctx.beginPath();ctx.rect(cx-sz*0.5+i*sz*0.38,cy-sz*1.5,sz*0.24,sz*0.28);ctx.fill();ctx.stroke();}
+  ctx.fillStyle='rgba(38,18,8,0.6)';ctx.beginPath();ctx.arc(cx,cy+sz*0.2,sz*0.24,Math.PI,0);ctx.rect(cx-sz*0.24,cy+sz*0.2,sz*0.48,sz*0.38);ctx.fill();
+  ctx.strokeStyle='rgba(139,32,32,0.78)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx,cy-sz*1.5);ctx.lineTo(cx,cy-sz*2.1);ctx.stroke();
+  ctx.fillStyle='rgba(139,32,32,0.78)';ctx.beginPath();ctx.moveTo(cx,cy-sz*2.1);ctx.lineTo(cx+sz*0.58,cy-sz*1.85);ctx.lineTo(cx,cy-sz*1.58);ctx.closePath();ctx.fill();
+}
+function drawBridge(x1,y1,x2,y2,w){
+  const a=Math.atan2(y2-y1,x2-x1),p=a+Math.PI/2,hw=w/2;
+  ctx.fillStyle='rgba(118,88,58,0.65)';ctx.strokeStyle='rgba(78,52,28,0.7)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(x1+Math.cos(p)*hw,y1+Math.sin(p)*hw);ctx.lineTo(x2+Math.cos(p)*hw,y2+Math.sin(p)*hw);ctx.lineTo(x2-Math.cos(p)*hw,y2-Math.sin(p)*hw);ctx.lineTo(x1-Math.cos(p)*hw,y1-Math.sin(p)*hw);ctx.closePath();ctx.fill();ctx.stroke();
+  const dist=Math.sqrt((x2-x1)**2+(y2-y1)**2),steps=Math.floor(dist/8);
+  for(let i=1;i<steps;i++){const t=i/steps,px=x1+(x2-x1)*t,py=y1+(y2-y1)*t;ctx.beginPath();ctx.moveTo(px+Math.cos(p)*(hw+1),py+Math.sin(p)*(hw+1));ctx.lineTo(px-Math.cos(p)*(hw+1),py-Math.sin(p)*(hw+1));ctx.stroke();}
+}
+function drawRoad(pts){
+  ctx.strokeStyle='rgba(138,108,68,0.48)';ctx.lineWidth=2;ctx.setLineDash([6,4]);
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.stroke();ctx.setLineDash([]);
 }
 
-function terrainLabel(t){
-  const map={forest:'Forest',mountains:'Mountains',desert:'Desert',plains:'Plains',tundra:'Tundra',swamp:'Swamp',volcanic:'Volcanic',mixed:'Mixed'};
-  return map[t]||'Land';
+function generateMap(){
+  const sizeKey=document.getElementById('mapSize').value;
+  const landType=document.getElementById('landType').value;
+  const terrain=document.getElementById('terrain').value;
+  const waterType=document.getElementById('water').value;
+  const settlementCount=document.getElementById('settlements').value;
+  const era=document.getElementById('era').value;
+  const seedVal=document.getElementById('seedInput').value.trim();
+  const seed=seedVal?hashStr(seedVal):Math.floor(Math.random()*2147483647);
+  lastSizeKey=sizeKey;
+  document.getElementById('seedInput').value=seed;
+  document.getElementById('seedDisplay').textContent='Seed: '+seed;
+  const rng=createRNG(seed);
+  const sz=SIZES[sizeKey];
+  canvas.width=sz.w;canvas.height=sz.h;
+  settlements=[];featureFns=[];baseImg=null;
+  document.getElementById('mapEmpty').style.display='none';
+  document.getElementById('mapCompass').style.display='block';
+  document.getElementById('mapTitleOverlay').style.display='block';
+  document.getElementById('mapLegend').style.display='block';
+  document.getElementById('renameTooltip').style.display='none';
+  const mapName=PRE[Math.floor(rng()*PRE.length)]+SUF[Math.floor(rng()*SUF.length)];
+  document.getElementById('mapTitleText').textContent='The Realm of '+mapName;
+  const W=sz.w,H=sz.h;
+
+  // Heightmap
+  const ng=makeNoise(rng,64,64);
+  const hm=[];
+  for(let y=0;y<H;y++){hm[y]=[];for(let x=0;x<W;x++){
+    const nx=x/W*8,ny=y/H*8;let h=fbm(ng,nx,ny,6);
+    const lt=landType==='random'?['continent','island','archipelago','peninsula','inland','coastal'][Math.floor(rng()*6)]:landType;
+    if(lt==='island'){const dx=(x/W-0.5)*2,dy=(y/H-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.75;}
+    else if(lt==='archipelago'){const dx=(x/W-0.5)*2,dy=(y/H-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.55;}
+    else if(lt==='peninsula'){const dy=(y/H-0.5)*2;h-=Math.abs(dy)*0.45+(1-x/W)*0.3;}
+    else if(lt==='coastal'){h-=(1-x/W)*0.55;}
+    else if(lt==='inland'){const dx=(x/W-0.5)*2,dy=(y/H-0.5)*2;h+=0.2-Math.sqrt(dx*dx+dy*dy)*0.15;}
+    else if(lt==='atoll'){const dx=(x/W-0.5)*2,dy=(y/H-0.5)*2;h-=Math.abs(Math.sqrt(dx*dx+dy*dy)-0.4)*2;}
+    else if(lt==='fjord'){h-=(1-x/W)*0.3;if(y/H>0.3&&y/H<0.7)h+=0.1;}
+    else if(lt==='delta'){h-=(y/H)*0.4;if(x/W>0.3&&x/W<0.7)h+=0.15;}
+    hm[y][x]=Math.max(0,Math.min(1,h));
+  }}
+
+  let wt=0.42;
+  if(waterType==='arid')wt=0.3;
+  else if(waterType==='abundant'||waterType==='archipelago')wt=0.52;
+  else if(waterType==='coastal')wt=0.46;
+
+  // Parchment base
+  const pg=ctx.createLinearGradient(0,0,W,H);
+  pg.addColorStop(0,'#f5e6c4');pg.addColorStop(0.4,'#f0ddb5');pg.addColorStop(1,'#e8d49e');
+  ctx.fillStyle=pg;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<W*H*0.11;i++){const px=Math.floor(rng()*W),py=Math.floor(rng()*H);ctx.fillStyle=`rgba(${rng()>0.5?174:133},${rng()>0.5?124:94},53,${rng()*0.052})`;ctx.fillRect(px,py,1+(rng()*2|0),1+(rng()*2|0));}
+
+  // Terrain pixels
+  const id=ctx.getImageData(0,0,W,H),pd=id.data;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const h=hm[y][x],i=(y*W+x)*4;let r,g,b;
+    if(h<wt-0.09){r=54;g=84;b=128;}
+    else if(h<wt){r=88;g=128;b=163;}
+    else{const lh=(h-wt)/(1-wt);
+      switch(terrain){
+        case 'forest':r=58+lh*28|0;g=93+lh*44|0;b=48+lh*18|0;break;
+        case 'jungle':r=38+lh*24|0;g=98+lh*48|0;b=38+lh*18|0;break;
+        case 'mountains':if(lh>0.65){r=198;g=193;b=188;}else if(lh>0.4){r=138;g=118;b=98;}else{r=113;g=138;b=83;}break;
+        case 'desert':case 'savanna':r=198+lh*38|0;g=163+lh*28|0;b=73+lh*18|0;break;
+        case 'tundra':r=203+lh*43|0;g=213+lh*33|0;b=223+lh*23|0;break;
+        case 'swamp':r=63+lh*28|0;g=83+lh*38|0;b=53+lh*18|0;break;
+        case 'volcanic':if(lh>0.7){r=222;g=73;b=23;}else{r=63+lh*48|0;g=38+lh*28|0;b=38+lh*18|0;}break;
+        case 'plains':r=163+lh*38|0;g=173+lh*28|0;b=78+lh*18|0;break;
+        case 'tidal':r=128+lh*48|0;g=148+lh*38|0;b=118+lh*28|0;break;
+        default:if(lh>0.75){r=178;g=173;b=168;}else if(lh>0.5){r=128;g=113;b=88;}else if(lh>0.25){r=98;g=128;b=73;}else{r=138;g=160;b=98;}
+      }
+      const bl=0.35;r=r*(1-bl)+206*bl|0;g=g*(1-bl)+181*bl|0;b=b*(1-bl)+136*bl|0;
+    }
+    pd[i]=r;pd[i+1]=g;pd[i+2]=b;pd[i+3]=255;
+  }
+  ctx.putImageData(id,0,0);
+
+  // Rivers
+  const riverPaths=[];
+  if(waterType!=='arid'&&waterType!=='lakes'){
+    const nr=waterType==='abundant'||waterType==='rivers'?7:3;
+    for(let r2=0;r2<nr;r2++){
+      let sx=Math.floor(rng()*W*0.6+W*0.2),sy=Math.floor(rng()*H*0.35);
+      if(!hm[sy]||hm[sy][sx]<wt+0.1)continue;
+      const path=[{x:sx,y:sy}];let cx2=sx,cy2=sy;
+      ctx.strokeStyle='rgba(72,112,152,0.68)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx2,cy2);
+      for(let step=0;step<220;step++){
+        let bx=cx2,by=cy2,bh=hm[cy2]?.[cx2]||0;
+        for(const [dx,dy] of [[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]]){
+          const nx2=cx2+dx,ny2=cy2+dy;if(nx2<0||nx2>=W||ny2<0||ny2>=H)continue;
+          const nh=hm[ny2][nx2];if(nh<bh){bh=nh;bx=nx2;by=ny2;}
+        }
+        bx+=Math.floor((rng()-0.5)*4);bx=Math.max(0,Math.min(W-1,bx));
+        cx2=bx;cy2=by;ctx.lineTo(cx2,cy2);path.push({x:cx2,y:cy2});
+        if(hm[cy2][cx2]<wt-0.05)break;
+      }
+      ctx.stroke();riverPaths.push(path);
+    }
+  }
+
+  // Lakes
+  if(waterType==='lakes'||waterType==='moderate'||waterType==='abundant'){
+    const nl=waterType==='abundant'?5:waterType==='lakes'?6:2;
+    for(let l=0;l<nl;l++){
+      const lx=Math.floor(rng()*W*0.7+W*0.15),ly=Math.floor(rng()*H*0.7+H*0.15);
+      if(!hm[ly]||hm[ly][lx]<wt+0.05)continue;
+      ctx.fillStyle='rgba(72,122,162,0.58)';ctx.strokeStyle='rgba(52,92,132,0.48)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.ellipse(lx,ly,20+rng()*48|0,13+rng()*33|0,rng()*Math.PI,0,Math.PI*2);ctx.fill();ctx.stroke();
+    }
+  }
+
+  // Save base
+  baseImg=ctx.getImageData(0,0,W,H);
+
+  // Build feature fns
+  const rng2=createRNG(seed+1);
+
+  // Mountains
+  if(['mountains','mixed','volcanic'].includes(terrain)){
+    const nm=terrain==='mountains'?22:10;
+    const mpts=[];for(let m=0;m<nm*3;m++){const mx=Math.floor(rng2()*W),my=Math.floor(rng2()*H);if(hm[my]&&hm[my][mx]>wt+0.18&&hm[my][mx]>0.62)mpts.push({mx,my,sz:9+rng2()*11});}
+    featureFns.push(()=>mpts.slice(0,nm).forEach(({mx,my,sz})=>drawMountain(mx,my,sz,rng2)));
+  }
+
+  // Trees
+  if(['forest','jungle','swamp','mixed','tundra','savanna'].includes(terrain)){
+    const nt=terrain==='forest'?85:terrain==='jungle'?95:terrain==='swamp'?42:32;
+    const tpts=[];for(let t=0;t<nt*3;t++){const tx=Math.floor(rng2()*W),ty=Math.floor(rng2()*H);if(hm[ty]&&hm[ty][tx]>wt+0.02&&hm[ty][tx]<0.78)tpts.push({tx,ty,sz:5+rng2()*5});}
+    featureFns.push(()=>tpts.slice(0,nt).forEach(({tx,ty,sz})=>drawTree(tx,ty,sz,terrain)));
+  }
+
+  // Swamp tufts
+  if(terrain==='swamp'||terrain==='tidal'){
+    const spts=[];for(let s=0;s<80;s++){const sx=Math.floor(rng2()*W),sy=Math.floor(rng2()*H);if(hm[sy]&&hm[sy][sx]>wt)spts.push({sx,sy,sz:6+rng2()*5});}
+    featureFns.push(()=>spts.forEach(({sx,sy,sz})=>drawSwampTuft(sx,sy,sz)));
+  }
+
+  // Valleys
+  const vpts=[];for(let v=0;v<12;v++){const vx=Math.floor(rng2()*W*0.7+W*0.15),vy=Math.floor(rng2()*H*0.7+H*0.15);if(hm[vy]&&hm[vy][vx]>wt+0.02&&hm[vy][vx]<0.55)vpts.push({vx,vy,w:25+rng2()*35,h:12+rng2()*18});}
+  featureFns.push(()=>vpts.forEach(({vx,vy,w,h})=>drawValley(vx,vy,w,h,rng2)));
+
+  // Ruins
+  const numRuins=era==='ancient'?6:era==='dark'?5:era==='apocalyptic'?7:3;
+  const ruinPts=[];const usedR=new Set();
+  for(let r3=0;r3<numRuins*4&&ruinPts.length<numRuins;r3++){
+    const rx=Math.floor(rng2()*W*0.8+W*0.1),ry=Math.floor(rng2()*H*0.8+H*0.1);
+    if(!hm[ry]||hm[ry][rx]<wt+0.03)continue;
+    let rname;do{rname=RUINS[Math.floor(rng2()*RUINS.length)];}while(usedR.has(rname));
+    usedR.add(rname);ruinPts.push({rx,ry,sz:7+rng2()*5,name:rname});
+  }
+  featureFns.push(()=>ruinPts.forEach(({rx,ry,sz,name})=>{
+    drawRuins(rx,ry,sz);
+    ctx.font="italic 7.5px 'Crimson Text',serif";ctx.fillStyle='rgba(78,38,18,0.68)';ctx.textAlign='center';ctx.fillText(name,rx,ry+17);
+  }));
+
+  // Castles
+  const numCastles=settlementCount==='none'?0:settlementCount==='few'?1:settlementCount==='many'?4:2;
+  const castlePts=[];const usedC=new Set();
+  for(let c=0;c<numCastles*5&&castlePts.length<numCastles;c++){
+    const cx=Math.floor(rng2()*W*0.7+W*0.15),cy=Math.floor(rng2()*H*0.7+H*0.15);
+    if(!hm[cy]||hm[cy][cx]<wt+0.05)continue;
+    let cname;do{cname=CASTLES[Math.floor(rng2()*CASTLES.length)];}while(usedC.has(cname));
+    usedC.add(cname);castlePts.push({cx,cy,sz:8+rng2()*6,name:cname});
+  }
+  featureFns.push(()=>castlePts.forEach(({cx,cy,sz,name})=>{
+    drawCastle(cx,cy,sz);
+    ctx.font="bold italic 8px 'Crimson Text',serif";ctx.fillStyle='rgba(78,28,8,0.8)';ctx.textAlign='center';ctx.fillText(name,cx,cy+23);
+  }));
+
+  // Settlements
+  const numS=settlementCount==='none'?0:settlementCount==='few'?3:settlementCount==='many'?12:6;
+  const usedN=new Set();
+  for(let s2=0;s2<numS;s2++){let att=0;while(att<60){const sx=Math.floor(rng2()*W*0.78+W*0.11),sy=Math.floor(rng2()*H*0.78+H*0.11);if(!hm[sy]||hm[sy][sx]<wt+0.03){att++;continue;}let nm;do{nm=TOWNS[Math.floor(rng2()*TOWNS.length)];}while(usedN.has(nm));usedN.add(nm);settlements.push({x:sx,y:sy,name:nm,isCity:rng2()>0.55});break;}}
+
+  // Roads
+  if(settlements.length>1){
+    const roadPairs=[];
+    for(let i=0;i<settlements.length-1;i++){if(rng2()>0.6)continue;roadPairs.push([settlements[i],settlements[i+1]]);}
+    featureFns.push(()=>roadPairs.forEach(([a,b])=>drawRoad([a,b])));
+    roadPairs.forEach(([a,b])=>drawRoad([a,b]));
+  }
+
+  // Bridges
+  if(riverPaths.length&&settlements.length>1){
+    const bridgePts=[];
+    for(let i=0;i<Math.min(3,riverPaths.length);i++){
+      const path=riverPaths[i],mid=Math.floor(path.length/2);
+      if(mid>0&&mid<path.length){const p=path[mid],prev=path[mid-1];if(hm[p.y]&&hm[p.y][p.x]>wt)bridgePts.push({x1:prev.x,y1:prev.y,x2:p.x+8,y2:p.y});}
+    }
+    featureFns.push(()=>bridgePts.forEach(({x1,y1,x2,y2})=>drawBridge(x1,y1,x2,y2,6)));
+    bridgePts.forEach(({x1,y1,x2,y2})=>drawBridge(x1,y1,x2,y2,6));
+  }
+
+  // Draw all features
+  drawAllFeatures();
+  drawSettlements();
+
+  // Vignette
+  const vig=ctx.createRadialGradient(W/2,H/2,H*0.27,W/2,H/2,H*0.81);
+  vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(44,24,16,0.3)');
+  ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
+  const eb=ctx.createLinearGradient(0,0,0,H);
+  eb.addColorStop(0,'rgba(44,24,16,0.2)');eb.addColorStop(0.05,'rgba(0,0,0,0)');eb.addColorStop(0.95,'rgba(0,0,0,0)');eb.addColorStop(1,'rgba(44,24,16,0.2)');
+  ctx.fillStyle=eb;ctx.fillRect(0,0,W,H);
+
+  // Border
+  ctx.strokeStyle='rgba(98,58,18,0.48)';ctx.lineWidth=3;ctx.strokeRect(8,8,W-16,H-16);
+  ctx.strokeStyle='rgba(98,58,18,0.2)';ctx.lineWidth=1;ctx.strokeRect(13,13,W-26,H-26);
+  [[14,14],[W-14,14],[14,H-14],[W-14,H-14]].forEach(([cx3,cy3])=>{ctx.fillStyle='rgba(98,58,18,0.48)';ctx.beginPath();ctx.arc(cx3,cy3,3,0,Math.PI*2);ctx.fill();});
+
+  // Legend
+  const li=[];
+  if(waterType!=='arid')li.push({icon:'💧',label:'Water'});
+  li.push({icon:tIcon(terrain),label:tLabel(terrain)});
+  if(numS>0)li.push({icon:'●',label:'Town'});
+  if(numCastles>0)li.push({icon:'🏰',label:'Castle'});
+  if(numRuins>0)li.push({icon:'☠',label:'Ruins'});
+  if(waterType!=='arid'&&waterType!=='lakes')li.push({icon:'〜',label:'River'});
+  if(settlements.length>1)li.push({icon:'- -',label:'Road'});
+  document.getElementById('legendItems').innerHTML=li.map(it=>`<div class="legend-item"><div class="legend-swatch">${it.icon}</div><span>${it.label}</span></div>`).join('');
+
+  document.getElementById('infoText').textContent=`${sizeKey.charAt(0).toUpperCase()+sizeKey.slice(1)} · ${tLabel(terrain)} · ${settlements.length} settlements · ${ruinPts.length} ruins · ${castlePts.length} castles`;
+  refreshList();applyZoom();
 }
 
-function landTypeLabel(t){
-  const map={continent:'Continent',island:'Island',peninsula:'Peninsula',inland:'Inland',random:'Mixed Land'};
-  return map[t]||'Region';
-}
+function tIcon(t){return{forest:'🌲',jungle:'🌴',mountains:'⛰',desert:'🏜',plains:'🌾',tundra:'❄',swamp:'🌿',volcanic:'🌋',savanna:'🌵',tidal:'🌊',mixed:'🗺'}[t]||'🗺';}
+function tLabel(t){return{forest:'Forest',jungle:'Jungle',mountains:'Mountains',desert:'Desert',plains:'Plains',tundra:'Tundra',swamp:'Swamp',volcanic:'Volcanic',savanna:'Savanna',tidal:'Tidal',mixed:'Mixed'}[t]||'Land';}
 
-function hashStr(str){
-  let h=0;
-  for(let i=0;i<str.length;i++){h=Math.imul(31,h)+str.charCodeAt(i)|0;}
-  return Math.abs(h);
-}
-
-// ── Event listeners ──────────────────────────────────────────────────────
 document.getElementById('generateBtn').addEventListener('click',()=>{
   const btn=document.getElementById('generateBtn');
-  btn.classList.add('loading');
-  btn.textContent='⏳ Forging Realm…';
-  setTimeout(()=>{
-    generateMap();
-    btn.classList.remove('loading');
-    btn.textContent='⚔ Generate Map';
-  },50);
+  btn.textContent='⏳ Forging Realm…';btn.disabled=true;
+  setTimeout(()=>{generateMap();btn.textContent='⚔ Forge Realm';btn.disabled=false;},40);
 });
-
-document.getElementById('randomSeedBtn').addEventListener('click',()=>{
-  document.getElementById('seedInput').value=Math.floor(Math.random()*999999);
-});
-
-document.getElementById('exportBtn').addEventListener('click',()=>{
-  const link=document.createElement('a');
-  link.download='realmforge-map.png';
-  link.href=canvas.toDataURL('image/png');
-  link.click();
-});
+document.getElementById('randomSeedBtn').onclick=()=>{document.getElementById('seedInput').value=Math.floor(Math.random()*999999);};
+document.getElementById('exportBtn').onclick=()=>{const a=document.createElement('a');a.download='realmforge.png';a.href=canvas.toDataURL('image/png');a.click();};
 </script>
 </body>
 </html>
