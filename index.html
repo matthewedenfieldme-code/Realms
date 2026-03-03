@@ -50,7 +50,7 @@ select:focus{border-color:var(--gold);}select option{background:#181e2a;}
 .ti input{flex:1;padding:3px 5px;font-size:.7rem;color:var(--tx);background:var(--p2);border:1px solid var(--brd);border-radius:2px;outline:none;}
 .ti input:focus{border-color:var(--gold);}
 .hint{font-size:.62rem;color:var(--soft);line-height:1.6;}
-.ma{position:relative;overflow:hidden;background:#020508;cursor:crosshair;}
+.ma{position:relative;overflow:hidden;background:#020508;cursor:default;}
 .ma.panning{cursor:grab;}
 .ma.panning.drag{cursor:grabbing;}
 #mc{position:absolute;top:0;left:0;}
@@ -716,7 +716,13 @@ function openCtxMenu(e){
 
 function renderCtxTab(tab,currentId){
   ctxTab=tab;
-  document.querySelectorAll('.ctab').forEach(function(t){t.className='ctab'+(t.dataset.tab===tab?' on':'');});
+  // Block all click/mousedown inside menu from reaching document
+var ctxMenuEl=document.getElementById('ctxMenu');
+ctxMenuEl.addEventListener('mousedown',function(e){e.stopPropagation();});
+ctxMenuEl.addEventListener('click',function(e){e.stopPropagation();});
+ctxMenuEl.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();});
+
+document.querySelectorAll('.ctab').forEach(function(t){t.className='ctab'+(t.dataset.tab===tab?' on':'');});
   var body=document.getElementById('ctxBody');
   var html='';
   if(tab==='terrain'){
@@ -737,7 +743,8 @@ function renderCtxTab(tab,currentId){
   }
   body.innerHTML=html;
   body.querySelectorAll('.ctxi').forEach(function(el){
-    el.addEventListener('click',function(){doCtxAction(el.dataset.action,el.dataset.id);});
+    el.addEventListener('mousedown',function(e){e.stopPropagation();});
+    el.addEventListener('click',function(e){e.stopPropagation();doCtxAction(el.dataset.action,el.dataset.id||'');});
   });
 }
 
@@ -771,13 +778,19 @@ function doCtxAction(action,id){
   document.getElementById('ctxMenu').style.display='none';
 }
 
+// Block all click/mousedown inside menu from reaching document
+var ctxMenuEl=document.getElementById('ctxMenu');
+ctxMenuEl.addEventListener('mousedown',function(e){e.stopPropagation();});
+ctxMenuEl.addEventListener('click',function(e){e.stopPropagation();});
+ctxMenuEl.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();});
+
 document.querySelectorAll('.ctab').forEach(function(t){
   t.addEventListener('click',function(){
     var tile=ctxPos&&grid[ctxPos.row]&&grid[ctxPos.row][ctxPos.col];
     renderCtxTab(t.dataset.tab,tile?tile.id:'');
   });
 });
-document.getElementById('ctxClose').onclick=function(){document.getElementById('ctxMenu').style.display='none';};
+document.getElementById('ctxClose').addEventListener('click',function(e){e.stopPropagation();document.getElementById('ctxMenu').style.display='none';});
 
 // ── Rename ─────────────────────────────────────────────────────────────────────
 function closePopups(){
