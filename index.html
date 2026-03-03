@@ -161,114 +161,109 @@ const S3=Math.sqrt(3);
 function hexCtr(col,row,R){return{x:R*1.5*col+R, y:R*S3*(row+(col%2?0.5:0))+R*S3/2};}
 function hexVerts(cx,cy,R){const p=[];for(let i=0;i<6;i++){const a=Math.PI/3*i;p.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}return p;}
 
-// ── Civ 5 inspired muted painterly palette ───────────────────────────────────
+// ── Muted Civ 5-inspired painterly palette ───────────────────────────────────
 function pxGrassland(n,fx,fy,n2){
-  const base=n*0.45+n2*0.25+0.3;
-  const r=Math.round(110+base*40+n*12);
-  const g=Math.round(140+base*50+n*15);
-  const b=Math.round(70+base*30+n*8);
-  return[r,g,b];
+  const base = n*0.4 + n2*0.25 + 0.35;
+  const r = Math.round(95 + base*45 + n*10);
+  const g = Math.round(115 + base*50 + n*12);
+  const b = Math.round(55 + base*30 + n*6);
+  return [r,g,b];
 }
 function pxPlains(n,fx,fy,n2){
-  const dry=Math.sin(fx*7+fy*3.5)*0.15+0.85;
-  const base=n*0.5+n2*0.25;
-  const r=Math.round(155+base*35+dry*12);
-  const g=Math.round(135+base*40+dry*10);
-  const b=Math.round(65+base*25+dry*6);
-  return[r,g,b];
-}
-function pxForest(n,fx,fy,n2){
-  const clump=n2*0.55+n*0.35;
-  const r=Math.round(35+clump*35+n*12);
-  const g=Math.round(75+clump*50+n*18);
-  const b=Math.round(30+clump*25+n*10);
-  return[r,g,b];
-}
-function pxJungle(n,fx,fy,n2){
-  const clump=n2*0.5+n*0.5;
-  const r=Math.round(25+clump*30+n*10);
-  const g=Math.round(80+clump*45+n*12);
-  const b=Math.round(20+clump*20+n*8);
-  return[r,g,b];
-}
-function pxMountain(n,fx,fy,n2){
-  if(n>0.82){// snow
-    const s=n*0.75+n2*0.25;
-    return[Math.round(210+s*45),Math.round(215+s*40),Math.round(225+s*30)];
-  }
-  if(n>0.58){// rock
-    const gray=n2*0.35+n*0.4;
-    return[Math.round(105+gray*60+n*15),Math.round(100+gray*55+n*12),Math.round(95+gray*50+n*10)];
-  }
-  // foothills
-  return[Math.round(90+n*50),Math.round(95+n*45),Math.round(70+n*35)];
-}
-function pxHills(n,fx,fy,n2){
-  const base=n*0.5+n2*0.3;
-  const r=Math.round(110+base*50+n*15);
-  const g=Math.round(120+base*45+n*12);
-  const b=Math.round(80+base*30+n*8);
-  return[r,g,b];
+  const dry = Math.sin(fx*8 + fy*4)*0.2 + 0.8;
+  const base = n*0.45 + n2*0.3;
+  const r = Math.round(140 + base*40 + dry*15);
+  const g = Math.round(125 + base*45 + dry*10);
+  const b = Math.round(60 + base*25 + dry*5);
+  return [r,g,b];
 }
 function pxDesert(n,fx,fy,n2){
-  const dune=Math.sin(fx*4.5+fy*2.8+n*3)*0.25+0.75;
-  const base=n*0.45+n2*0.25;
-  const r=Math.round(185+base*45+dune*18);
-  const g=Math.round(150+base*35+dune*12);
-  const b=Math.round(80+base*25+dune*8);
-  return[r,g,b];
+  const dune = Math.sin(fx*5 + fy*3 + n*4)*0.25 + 0.75;
+  const base = n*0.4 + n2*0.25;
+  const r = Math.round(170 + base*50 + dune*20);
+  const g = Math.round(135 + base*40 + dune*15);
+  const b = Math.round(70 + base*30 + dune*10);
+  return [r,g,b];
 }
 function pxTundra(n,fx,fy,n2){
-  const frost=n2>0.55?0.4:0;
-  const base=n*0.4+n2*0.25;
-  const r=Math.round(140+base*50+frost*60);
-  const g=Math.round(150+base*55+frost*70);
-  const b=Math.round(145+base*50+frost*75);
-  return[r,g,b];
+  const frost = n2 > 0.6 ? 0.45 : 0.1;
+  const base = n*0.35 + n2*0.25;
+  const r = Math.round(130 + base*55 + frost*70);
+  const g = Math.round(140 + base*60 + frost*80);
+  const b = Math.round(135 + base*55 + frost*85);
+  return [r,g,b];
 }
-function pxSnow(n,fx,fy,n2){
-  const s=n*0.5+n2*0.3+0.3;
-  return[Math.round(205+s*50),Math.round(210+s*45),Math.round(220+s*40)];
+function pxForest(n,fx,fy,n2){
+  const clump = n2*0.6 + n*0.3;
+  const r = Math.round(30 + clump*40 + n*8);
+  const g = Math.round(65 + clump*55 + n*12);
+  const b = Math.round(25 + clump*30 + n*6);
+  return [r,g,b];
+}
+function pxJungle(n,fx,fy,n2){
+  const clump = n2*0.55 + n*0.4;
+  const r = Math.round(25 + clump*35 + n*8);
+  const g = Math.round(70 + clump*50 + n*10);
+  const b = Math.round(20 + clump*25 + n*6);
+  return [r,g,b];
+}
+function pxMountain(n,fx,fy,n2){
+  if(n>0.82){
+    const s = n*0.75 + n2*0.25;
+    return [Math.round(205 + s*50), Math.round(210 + s*45), Math.round(220 + s*40)];
+  }
+  if(n>0.58){
+    const gray = n2*0.35 + n*0.4;
+    return [Math.round(100 + gray*65 + n*12), Math.round(95 + gray*60 + n*10), Math.round(90 + gray*55 + n*8)];
+  }
+  return [Math.round(85 + n*55), Math.round(90 + n*50), Math.round(65 + n*40)];
+}
+function pxHills(n,fx,fy,n2){
+  const base = n*0.5 + n2*0.3;
+  const r = Math.round(105 + base*55 + n*12);
+  const g = Math.round(115 + base*50 + n*10);
+  const b = Math.round(75 + base*35 + n*6);
+  return [r,g,b];
 }
 function pxSwamp(n,fx,fy,n2){
-  const wet=n2>0.5?0.4:0;
-  const r=Math.round(50+n*30+wet*15);
-  const g=Math.round(80+n*35+wet*10);
-  const b=Math.round(45+n*25+wet*20);
-  return[r,g,b];
-}
-function pxVolcanic(n,fx,fy,n2){
-  if(n>0.7){// lava
-    return[Math.round(170+n*70),Math.round(60+n*50),Math.round(10+n*20)];
-  }
-  const r=Math.round(60+n*40+n2*15);
-  const g=Math.round(45+n*25+n2*10);
-  const b=Math.round(35+n*20+n2*8);
-  return[r,g,b];
+  const wet = n2>0.5?0.4:0;
+  const r = Math.round(45 + n*35 + wet*15);
+  const g = Math.round(75 + n*40 + wet*10);
+  const b = Math.round(40 + n*30 + wet*20);
+  return [r,g,b];
 }
 function pxSavanna(n,fx,fy,n2){
-  const dry=Math.sin(fx*6+fy*4)*0.3+0.7;
-  const base=n*0.5+n2*0.3+0.2;
-  const r=Math.round(160+base*50+dry*15);
-  const g=Math.round(140+base*45+dry*12);
-  const b=Math.round(70+base*30+dry*8);
-  return[r,g,b];
+  const dry = Math.sin(fx*6 + fy*4)*0.3 + 0.7;
+  const base = n*0.5 + n2*0.3 + 0.2;
+  const r = Math.round(155 + base*55 + dry*15);
+  const g = Math.round(135 + base*50 + dry*12);
+  const b = Math.round(65 + base*35 + dry*8);
+  return [r,g,b];
+}
+function pxVolcanic(n,fx,fy,n2){
+  if(n>0.7){
+    return [Math.round(165 + n*75), Math.round(55 + n*55), Math.round(5 + n*25)];
+  }
+  const r = Math.round(55 + n*45 + n2*12);
+  const g = Math.round(40 + n*30 + n2*8);
+  const b = Math.round(30 + n*25 + n2*6);
+  return [r,g,b];
 }
 function pxOcean(n,fx,fy,n2,deep){
   if(deep){
-    return[Math.round(18+n*20),Math.round(45+n*30),Math.round(80+n*35)];
+    return [Math.round(15 + n*25), Math.round(40 + n*35), Math.round(75 + n*40)];
   }
-  return[Math.round(30+n*25),Math.round(75+n*35),Math.round(120+n*35)];
+  return [Math.round(25 + n*30), Math.round(70 + n*40), Math.round(115 + n*40)];
 }
 function pxCoast(n,fx,fy,n2){
-  const sandy=n2>0.55?0.35:0;
-  return[Math.round(45+n*25+sandy*35),Math.round(100+n*35+sandy*20),Math.round(140+n*30-sandy*15)];
+  const sandy = n2>0.55?0.35:0;
+  return [Math.round(40 + n*30 + sandy*40), Math.round(95 + n*40 + sandy*25), Math.round(135 + n*35 - sandy*20)];
 }
 function pxRiver(n,fx,fy,n2){
-  return[Math.round(40+n*25),Math.round(95+n*35),Math.round(145+n*35)];
+  return [Math.round(35 + n*30), Math.round(90 + n*40), Math.round(140 + n*40)];
 }
 function pxLake(n,fx,fy,n2){
-  return[Math.round(30+n*22),Math.round(85+n*30),Math.round(125+n*30)];
+  return [Math.round(25 + n*28), Math.round(80 + n*35), Math.round(120 + n*35)];
 }
 
 // ── Dispatcher ────────────────────────────────────────────────────────────────
@@ -279,11 +274,11 @@ function getTerrainPx(id,n,fx,fy,n2){
     case 'FOREST':return pxForest(n,fx,fy,n2);
     case 'JUNGLE':return pxJungle(n,fx,fy,n2);
     case 'MOUNTAINS':return pxMountain(n,fx,fy,n2);
-    case 'SNOW_PEAK':return pxSnow(n,fx,fy,n2);
+    case 'SNOW_PEAK':return pxMountain(n,fx,fy,n2);
     case 'HILLS':return pxHills(n,fx,fy,n2);
     case 'DESERT':return pxDesert(n,fx,fy,n2);
     case 'TUNDRA':return pxTundra(n,fx,fy,n2);
-    case 'SNOW':return pxSnow(n,fx,fy,n2);
+    case 'SNOW':return pxMountain(n,fx,fy,n2);
     case 'SWAMP':return pxSwamp(n,fx,fy,n2);
     case 'VOLCANIC':return pxVolcanic(n,fx,fy,n2);
     case 'SAVANNA':return pxSavanna(n,fx,fy,n2);
@@ -297,13 +292,13 @@ function getTerrainPx(id,n,fx,fy,n2){
   }
 }
 
-// ── Legend colors ─────────────────────────────────────────────────────────────
+// ── Legend colors (muted Civ 5 style) ────────────────────────────────────────
 const LEGCOL={
-  DEEP_OCEAN:'#0d1f40',OCEAN:'#142f55',COAST:'#1e4a7a',SHALLOW:'#2b6aa0',
-  PLAINS:'#a89c4a',GRASSLAND:'#5a8a38',FOREST:'#3a6a2a',JUNGLE:'#2a5a22',
-  MOUNTAINS:'#7a7a7a',SNOW_PEAK:'#d0d8e0',HILLS:'#8a8a6a',DESERT:'#c9a568',
-  TUNDRA:'#b8c0c8',SNOW:'#e8f0f8',SWAMP:'#4a5a48',VOLCANIC:'#4a2a1a',
-  SAVANNA:'#b89a5a',RIVER:'#5a8ac8',LAKE:'#4a7ab8',RUINS:'#505050',CASTLE:'#a04030'
+  DEEP_OCEAN:'#0a1b38',OCEAN:'#112a4d',COAST:'#1b406e',SHALLOW:'#255a8c',
+  PLAINS:'#9e8f3e',GRASSLAND:'#4f7a2e',FOREST:'#2f5a22',JUNGLE:'#234a1c',
+  MOUNTAINS:'#6a6a6a',SNOW_PEAK:'#c8d0d8',HILLS:'#7a7a5a',DESERT:'#b89a58',
+  TUNDRA:'#a8b0b8',SNOW:'#e0e8f0',SWAMP:'#3f4f3e',VOLCANIC:'#3f2212',
+  SAVANNA:'#a88a4a',RIVER:'#4f7ab8',LAKE:'#3f6aa8',RUINS:'#484848',CASTLE:'#903020'
 };
 const LEGLBL={
   DEEP_OCEAN:'Deep Ocean',OCEAN:'Ocean',COAST:'Coast',SHALLOW:'Shallow',
@@ -314,12 +309,12 @@ const LEGLBL={
 };
 
 // ── Global vars ───────────────────────────────────────────────────────────────
-let COLS,ROWS,R,grid=[],settlements=[],detNoise=null,detNoise2=null,texScale=0.12;
+let COLS,ROWS,R,grid=[],settlements=[],detNoise=null,detNoise2=null,texScale=0.10;
 const canvas=document.getElementById('mc'),ctx=canvas.getContext('2d');
 let zoom=1,ox=0,oy=0,dragging=false,dsx=0,dsy=0,dox=0,doy=0;
 let renamingIdx=-1;
 
-// ── Paint single hex with noise + isometric light ────────────────────────────
+// ── Paint single hex with noise + stronger isometric light ───────────────────
 function paintHex(imgData,W,cx,cy,R,terrain,noise,noise2,scale){
   const verts=hexVerts(cx,cy,R);
   const minX=Math.min(...verts.map(v=>v[0])),maxX=Math.max(...verts.map(v=>v[0]));
@@ -328,12 +323,12 @@ function paintHex(imgData,W,cx,cy,R,terrain,noise,noise2,scale){
     for(let px=~~minX;px<=maxX;px++){
       if(px<0||px>=W||py<0||py>=imgData.height)continue;
       const fx=(px-cx)/R,fy=(py-cy)/R;
-      if(fx*fx+fy*fy>1.05)continue; // rough circle cull
+      if(fx*fx+fy*fy>1.05)continue;
       const n=fbm(noise,px*scale,py*scale,4);
       const n2=fbm(noise2,px*scale*1.4,py*scale*1.4,3);
       let [r,g,b]=getTerrainPx(terrain,n,fx,fy,n2);
-      // Stronger Civ 5 style isometric light
-      const light=1.0 + (-fy*0.24) + (fx>-0.15?-fx*0.14:fx*0.10);
+      // Stronger isometric lighting
+      const light=1.0 + (-fy*0.28) + (fx>-0.2?-fx*0.16:fx*0.12);
       r=Math.min(255,Math.round(r*light));
       g=Math.min(255,Math.round(g*light));
       b=Math.min(255,Math.round(b*light));
@@ -343,36 +338,36 @@ function paintHex(imgData,W,cx,cy,R,terrain,noise,noise2,scale){
   }
 }
 
-// ── Vector overlays (sparser & softer) ────────────────────────────────────────
+// ── Vector overlays (sparser, softer, more Civ 5-like) ────────────────────────
 function drawFeatureOverlay(ctx,cx,cy,R,tile){
   const id=tile.id;
   ctx.save();ctx.translate(cx,cy);
 
   if(id==='FOREST'||id==='JUNGLE'){
     const isJungle=id==='JUNGLE';
-    const count=isJungle?3:Math.floor(Math.random()*2)+2;
+    const count=isJungle?4:3+Math.floor(Math.random()*3);
     const positions=isJungle?
-      [[-0.22,-0.05,0.52],[-0.05,0.18,0.44],[0.20,-0.10,0.48]]:
-      [[-0.18,-0.08,0.50],[0.15,-0.12,0.46]];
+      [[-0.28,-0.08,0.55],[-0.10,0.22,0.48],[0.25,-0.12,0.50],[0.05,0.15,0.45]]:
+      [[-0.20,-0.10,0.52],[0.18,-0.15,0.48],[-0.05,0.20,0.45]];
     for(let i=0;i<count;i++){
       const [dx,dy,sz]=positions[i%positions.length];
       drawTreeCanopy(ctx,dx*R,dy*R,sz*R,isJungle);
     }
   }
   else if(id==='MOUNTAINS'||id==='SNOW_PEAK'){
-    const peaks=id==='SNOW_PEAK'?2+Math.floor(Math.random()*2):1+Math.floor(Math.random()*2);
+    const peaks=2+Math.floor(Math.random()*2);
     for(let i=0;i<peaks;i++){
       const ang=Math.random()*Math.PI*2;
-      const dist=R*0.25+Math.random()*R*0.4;
+      const dist=R*0.3+Math.random()*R*0.35;
       const px=dist*Math.cos(ang),py=dist*Math.sin(ang);
-      drawMountainPeak(ctx,px,py,R*0.55,id==='SNOW_PEAK');
+      drawMountainPeak(ctx,px,py,R*0.6,id==='SNOW_PEAK');
     }
   }
   else if(id==='HILLS'){
     for(let i=0;i<2;i++){
       const ang=Math.random()*Math.PI*2;
-      const dist=R*0.3+Math.random()*R*0.35;
-      drawHillBlob(ctx,dist*Math.cos(ang),dist*Math.sin(ang),R*0.5);
+      const dist=R*0.35+Math.random()*R*0.3;
+      drawHillBlob(ctx,dist*Math.cos(ang),dist*Math.sin(ang),R*0.55);
     }
   }
 
@@ -380,67 +375,57 @@ function drawFeatureOverlay(ctx,cx,cy,R,tile){
 }
 
 function drawTreeCanopy(ctx,x,y,r,jungle){
-  const c=ctx;
-  c.globalAlpha=jungle?0.75:0.65;
-  c.fillStyle=jungle?'#2a5a22':'#3a6a2a';
-  c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();
-  c.globalAlpha=0.22;
-  c.fillStyle='#000';
-  c.beginPath();c.arc(x+r*0.25,y+r*0.25,r*0.7,0,Math.PI*2);c.fill();
-  c.globalAlpha=1;
+  ctx.globalAlpha=jungle?0.78:0.68;
+  ctx.fillStyle=jungle?'#28501f':'#346128';
+  ctx.beginPath();ctx.ellipse(x,y,r*1.15,r*0.85,Math.random()*0.5-0.25,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=0.22;ctx.fillStyle='#000';
+  ctx.beginPath();ctx.ellipse(x+r*0.22,y+r*0.28,r*0.75,r*0.55,0,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=1;
 }
 
 function drawMountainPeak(ctx,x,y,r,snow){
-  const c=ctx;
-  c.fillStyle=snow?'#d0d8e0':'#7a7a7a';
-  c.beginPath();
-  c.moveTo(x,y-r*0.9);
-  c.lineTo(x-r*0.7,y+r*0.6);
-  c.lineTo(x+r*0.7,y+r*0.6);
-  c.closePath();c.fill();
-  // subtle snow cap
+  ctx.fillStyle=snow?'#d8e0e8':'#6a6a6a';
+  ctx.beginPath();
+  ctx.moveTo(x,y-r*0.85);
+  ctx.quadraticCurveTo(x-r*0.6,y+r*0.3,x-r*0.8,y+r*0.55);
+  ctx.quadraticCurveTo(x,y+r*0.7,x+r*0.8,y+r*0.55);
+  ctx.quadraticCurveTo(x+r*0.6,y+r*0.3,x,y-r*0.85);
+  ctx.fill();
   if(snow){
-    c.fillStyle='#e8f0f8';
-    c.beginPath();
-    c.moveTo(x,y-r*0.7);
-    c.lineTo(x-r*0.45,y-r*0.1);
-    c.lineTo(x+r*0.45,y-r*0.1);
-    c.closePath();c.fill();
+    ctx.fillStyle='#f0f8ff';
+    ctx.beginPath();ctx.arc(x,y-r*0.4,r*0.38,0,Math.PI*2);ctx.fill();
   }
 }
 
 function drawHillBlob(ctx,x,y,r){
-  ctx.fillStyle='#8a8a6a';
-  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
-  ctx.globalAlpha=0.18;
-  ctx.fillStyle='#000';
-  ctx.beginPath();ctx.arc(x+r*0.3,y+r*0.3,r*0.65,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#7a7a5a';
+  ctx.beginPath();ctx.ellipse(x,y,r*1.1,r*0.9,Math.random()*0.3-0.15,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=0.18;ctx.fillStyle='#000';
+  ctx.beginPath();ctx.ellipse(x+r*0.25,y+r*0.3,r*0.7,r*0.6,0,0,Math.PI*2);ctx.fill();
   ctx.globalAlpha=1;
 }
 
 function drawRiverOverlay(ctx,cx,cy,R){
-  ctx.strokeStyle='rgba(60,140,220,0.55)';
-  ctx.lineWidth=R*0.06;
+  ctx.strokeStyle='rgba(55,135,215,0.58)';
+  ctx.lineWidth=R*0.045;
   ctx.lineCap='round';
   ctx.beginPath();
-  ctx.moveTo(cx-R*0.55,cy-R*0.25);
-  ctx.quadraticCurveTo(cx-R*0.1,cy-R*0.4,cx+R*0.4,cy+R*0.1);
-  ctx.quadraticCurveTo(cx+R*0.6,cy+R*0.35,cx+R*0.45,cy+R*0.55);
+  ctx.moveTo(cx-R*0.6,cy-R*0.3);
+  ctx.quadraticCurveTo(cx-R*0.15,cy-R*0.45,cx+R*0.45,cy+R*0.05);
+  ctx.quadraticCurveTo(cx+R*0.65,cy+R*0.4,cx+R*0.5,cy+R*0.6);
   ctx.stroke();
 
-  // subtle highlight
-  ctx.strokeStyle='rgba(160,220,255,0.16)';
-  ctx.lineWidth=R*0.09;
-  ctx.beginPath();ctx.moveTo(cx-R*0.55,cy-R*0.25);
-  ctx.quadraticCurveTo(cx-R*0.1,cy-R*0.4,cx+R*0.4,cy+R*0.1);
-  ctx.quadraticCurveTo(cx+R*0.6,cy+R*0.35,cx+R*0.45,cy+R*0.55);
+  ctx.strokeStyle='rgba(150,215,255,0.18)';
+  ctx.lineWidth=R*0.08;
+  ctx.beginPath();ctx.moveTo(cx-R*0.6,cy-R*0.3);
+  ctx.quadraticCurveTo(cx-R*0.15,cy-R*0.45,cx+R*0.45,cy+R*0.05);
+  ctx.quadraticCurveTo(cx+R*0.65,cy+R*0.4,cx+R*0.5,cy+R*0.6);
   ctx.stroke();
 }
 
-// ── Thin hex border ───────────────────────────────────────────────────────────
 function drawHexBorder(ctx,cx,cy,R){
-  ctx.strokeStyle='rgba(80,100,120,0.35)';
-  ctx.lineWidth=1.4;
+  ctx.strokeStyle='rgba(60,80,100,0.4)';
+  ctx.lineWidth=1.5;
   const verts=hexVerts(cx,cy,R);
   ctx.beginPath();
   ctx.moveTo(...verts[0]);
@@ -454,7 +439,6 @@ function renderMap(){
   const W=canvas.width,H=canvas.height;
   ctx.fillStyle='#03060c';ctx.fillRect(0,0,W,H);
 
-  // 1. Pixel terrain
   const imgData=ctx.createImageData(W,H);
   for(let row=0;row<ROWS;row++){
     for(let col=0;col<COLS;col++){
@@ -465,7 +449,6 @@ function renderMap(){
   }
   ctx.putImageData(imgData,0,0);
 
-  // 2. Vector features
   for(let row=0;row<ROWS;row++){
     for(let col=0;col<COLS;col++){
       const tile=grid[row][col];if(!tile)continue;
@@ -474,7 +457,6 @@ function renderMap(){
     }
   }
 
-  // 3. Rivers
   for(let row=0;row<ROWS;row++){
     for(let col=0;col<COLS;col++){
       if(grid[row][col]?.id==='RIVER'){
@@ -484,7 +466,6 @@ function renderMap(){
     }
   }
 
-  // 4. Hex borders
   for(let row=0;row<ROWS;row++){
     for(let col=0;col<COLS;col++){
       const{x,y}=hexCtr(col,row,R);
@@ -492,7 +473,6 @@ function renderMap(){
     }
   }
 
-  // 5. Roads (faint)
   if(settlements.length>1){
     ctx.strokeStyle='rgba(188,155,72,0.32)';ctx.lineWidth=1.8;ctx.setLineDash([6,5]);
     for(let i=0;i<settlements.length-1;i++){if(settlements[i].road){
@@ -502,7 +482,6 @@ function renderMap(){
     ctx.setLineDash([]);
   }
 
-  // 6. Settlements
   settlements.forEach(s=>{
     const glow=ctx.createRadialGradient(s.px,s.py,0,s.px,s.py,R*0.9);
     glow.addColorStop(0,s.isCity?'rgba(220,72,72,0.32)':'rgba(220,188,68,0.28)');
@@ -522,7 +501,6 @@ function renderMap(){
     ctx.fillStyle=s.isCity?'#ffe0e0':'#fff0c0';ctx.fillText(s.name,s.px,s.py-R*0.68);
   });
 
-  // 7. Subtle post-process (multiply + vignette)
   ctx.save();
   ctx.globalCompositeOperation='multiply';
   ctx.fillStyle='rgba(20,30,60,0.07)';
@@ -535,16 +513,17 @@ function renderMap(){
   ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
 }
 
-// ── Names & other unchanged parts remain the same ─────────────────────────────
+// ── Names ─────────────────────────────────────────────────────────────────────
 const PRE=['Aether','Brim','Cael','Drak','Eld','Fae','Grim','Helm','Iron','Jade','Kael','Lorn','Mor','Neth','Orm','Pyre','Quel','Raven','Stone','Thorn','Val','Wych','Xan','Yor','Zeph','Ash','Black','Cold','Dawn','Frost','Gold','High','Mist','Night','Oak','Silver'];
 const SUF=['haven','moor','fell','reach','hold','gate','shire','mere','dun','heim','keep','vale','ford','mark','fen','spire','watch','crest','brook','dale','field','glen','grove','hill','marsh','peak','ridge','rock','stead','tor','wood'];
 const TOWNS=['Ashford','Brackwater','Coldmere','Dusthaven','Elderwick','Frostgate','Grimhold','Harrowfen','Ironspire','Jadekeep','Kaldrath','Lornswick','Mirefall','Nethgate','Oldwatch','Pyremont','Quelford','Ravenstone','Stonegate','Thornwick','Ulvenmoor','Valeford','Wychwood','Xandrel','Yorkstead','Zephyrhold','Embervale','Frostwick','Goldfen','Highkeep','Irondale','Jadewood','Keldmoor','Lorndell','Mirehaven','Netherford','Ashwick','Blackmere','Cresthold','Dustwick'];
 const RUINS_N=['Shattered Keep','Tomb of Aelvar','Drakmore Ruins','Sunken Temple','Shadow Cradle','Void Citadel','Forgotten Spire','Grim Necropolis','Broken Gate','Xan Obelisk'];
 const CASTLE_N=['Ironhold','Drakenmoor','High Aerie','Stormwatch','Embercrown','Thornwall','Voidstone','Goldspire','Nightwatch','Bleakwall'];
 
+// ── Sizes ─────────────────────────────────────────────────────────────────────
 const SIZES={small:{cols:32,rows:24},medium:{cols:52,rows:38},large:{cols:72,rows:52}};
 
-// ── Generate function (unchanged logic, just using new colors/lighting) ───────
+// ── Generate ──────────────────────────────────────────────────────────────────
 function generate(){
   const sizeKey=document.getElementById('mapSize').value;
   const landType=document.getElementById('landType').value;
@@ -560,7 +539,7 @@ function generate(){
   const rng=mkRng(seed),rng2=mkRng(seed+7),rng3=mkRng(seed+999);
   detNoise=mkNoise(rng3,128,128);
   detNoise2=mkNoise(mkRng(seed+1337),128,128);
-  texScale=0.09+rng3()*0.05;
+  texScale=0.07+rng3()*0.04;
 
   const sz=SIZES[sizeKey];COLS=sz.cols;ROWS=sz.rows;R=26;
   canvas.width=Math.ceil(R*1.5*COLS+R*2.5);
@@ -571,20 +550,149 @@ function generate(){
   document.getElementById('mapName').style.display='block';
   document.getElementById('mapEmpty').style.display='none';
 
-  // Heightmap + rest of generation logic remains unchanged...
-  // (I'm omitting the full heightmap / land shaping / tile assignment / lakes / rivers / ruins / castles / settlements code here for brevity,
-  //  but you should keep your original version of that part below this comment)
-  // Paste your original generate() logic starting from:
-  // const hn=makeNoise(rng,64,64),mn=makeNoise(rng,32,32);
-  // ... all the way to the end of settlements & legend
+  // Heightmap
+  const hn=mkNoise(rng,64,64),mn=mkNoise(rng,32,32);
+  const hm=[],mm=[];
+  for(let r=0;r<ROWS;r++){hm[r]=[];mm[r]=[];for(let c=0;c<COLS;c++){hm[r][c]=fbm(hn,c/COLS*8,r/ROWS*8,6);mm[r][c]=fbm(mn,c/COLS*6,r/ROWS*6,4);}}
 
-  // For the purpose of this paste-ready file, assume the rest is identical to your original.
-  // If you want me to include the full 100% unchanged generation logic too, let me know.
+  // Land shaping
+  const lt=landType==='random'?['continent','island','archipelago','peninsula','inland','coastal'][Math.floor(rng2()*6)]:landType;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    let h=hm[r][c];
+    if(lt==='island'){const dx=(c/COLS-0.5)*2,dy=(r/ROWS-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.72;}
+    else if(lt==='archipelago'){const dx=(c/COLS-0.5)*2,dy=(r/ROWS-0.5)*2;h-=Math.sqrt(dx*dx+dy*dy)*0.50;}
+    else if(lt==='peninsula'){const dy=(r/ROWS-0.5)*2;h-=Math.abs(dy)*0.40+(1-c/COLS)*0.26;}
+    else if(lt==='coastal'){h-=(1-c/COLS)*0.50;}
+    else if(lt==='inland'){const dx=(c/COLS-0.5)*2,dy=(r/ROWS-0.5)*2;h+=0.16-Math.sqrt(dx*dx+dy*dy)*0.12;}
+    else if(lt==='atoll'){const dx=(c/COLS-0.5)*2,dy=(r/ROWS-0.5)*2;h-=Math.abs(Math.sqrt(dx*dx+dy*dy)-0.36)*2;}
+    else if(lt==='fjord'){h-=(1-c/COLS)*0.26;if(r/ROWS>0.28&&r/ROWS<0.72)h+=0.1;}
+    else if(lt==='delta'){h-=(r/ROWS)*0.36;if(c/COLS>0.28&&c/COLS<0.72)h+=0.13;}
+    hm[r][c]=Math.max(0,Math.min(1,h));
+  }
+
+  let wt=0.34;
+  if(waterType==='arid')wt=0.20;
+  else if(waterType==='abundant')wt=0.44;
+  else if(waterType==='coastal')wt=0.38;
+  else if(waterType==='rivers'||waterType==='lakes')wt=0.28;
+
+  grid=[];settlements=[];
+  for(let r=0;r<ROWS;r++){
+    grid[r]=[];
+    for(let c=0;c<COLS;c++){
+      const h=hm[r][c],m=mm[r][c];
+      let id;
+      if(h<wt-0.12)id='DEEP_OCEAN';
+      else if(h<wt-0.04)id='OCEAN';
+      else if(h<wt)id='COAST';
+      else if(h<wt+0.022)id='SHALLOW';
+      else{
+        const lh=(h-wt)/(1-wt);
+        switch(terrain){
+          case 'mountains':id=lh>0.80?'SNOW_PEAK':lh>0.55?'MOUNTAINS':lh>0.30?'HILLS':m>0.50?'FOREST':'PLAINS';break;
+          case 'forest':id=lh>0.70?'MOUNTAINS':lh>0.36?'FOREST':'GRASSLAND';break;
+          case 'jungle':id=lh>0.70?'MOUNTAINS':lh>0.26?'JUNGLE':'GRASSLAND';break;
+          case 'desert':id=lh>0.74?'MOUNTAINS':lh>0.46?'HILLS':'DESERT';break;
+          case 'tundra':id=lh>0.70?'SNOW_PEAK':lh>0.40?'SNOW':'TUNDRA';break;
+          case 'swamp':id=lh>0.65?'MOUNTAINS':lh>0.30?'SWAMP':'SWAMP';break;
+          case 'plains':id=lh>0.72?'MOUNTAINS':lh>0.48?'HILLS':m>0.58?'GRASSLAND':'PLAINS';break;
+          case 'savanna':id=lh>0.74?'MOUNTAINS':lh>0.48?'HILLS':'SAVANNA';break;
+          case 'volcanic':id=lh>0.70?'VOLCANIC':'VOLCANIC';break;
+          default:
+            if(lh>0.84)id='SNOW_PEAK';
+            else if(lh>0.64)id='MOUNTAINS';
+            else if(lh>0.52)id=m>0.56?'FOREST':'HILLS';
+            else if(lh>0.36)id=m>0.63?'FOREST':m>0.44?'GRASSLAND':'PLAINS';
+            else if(lh>0.18)id=m>0.56?'GRASSLAND':m>0.32?'PLAINS':'SAVANNA';
+            else id=m>0.62?'SWAMP':'PLAINS';
+        }
+      }
+      grid[r][c]={id,label:''};
+    }
+  }
+
+  // Lakes
+  if(waterType!=='arid'&&waterType!=='rivers'){
+    const nl=waterType==='lakes'||waterType==='abundant'?8:3;
+    for(let l=0;l<nl;l++){
+      const lc=2+Math.floor(rng2()*(COLS-4)),lr=2+Math.floor(rng2()*(ROWS-4));
+      if((hm[lr]?.[lc]||0)<wt+0.04)continue;
+      const lsz=1+Math.floor(rng2()*2);
+      for(let dr=-lsz;dr<=lsz;dr++)for(let dc=-lsz;dc<=lsz;dc++){
+        const nr=lr+dr,nc=lc+dc;
+        if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&Math.sqrt(dr*dr+dc*dc)<=lsz&&hm[nr][nc]>wt)
+          grid[nr][nc]={id:'LAKE',label:''};
+      }
+    }
+  }
+
+  // Rivers
+  if(waterType!=='arid'&&waterType!=='lakes'){
+    const nr=waterType==='rivers'||waterType==='abundant'?6:3;
+    for(let ri=0;ri<nr;ri++){
+      let rc=2+Math.floor(rng2()*(COLS-4)),rr=0;
+      while(rr<ROWS&&(hm[rr]?.[rc]||0)<wt+0.12)rr++;
+      for(let step=0;step<ROWS*2&&rr<ROWS&&rc>=0&&rc<COLS;step++){
+        if((hm[rr]?.[rc]||0)<wt)break;
+        const cur=grid[rr][rc];
+        if(cur&&!['LAKE','CASTLE','RUINS'].includes(cur.id))grid[rr][rc]={id:'RIVER',label:''};
+        let br=rr+1,bc=rc,bh=hm[rr+1]?.[rc]||0;
+        for(const[nr2,nc2]of[[rr+1,rc-1],[rr+1,rc],[rr+1,rc+1],[rr,rc-1],[rr,rc+1]]){if(nr2>=0&&nr2<ROWS&&nc2>=0&&nc2<COLS){const nh=hm[nr2]?.[nc2]||0;if(nh<bh){bh=nh;br=nr2;bc=nc2;}}}
+        rr=br;rc=bc;
+      }
+    }
+  }
+
+  // Ruins & Castles
+  const numRuins=era==='ancient'?6:era==='dark'?5:era==='apocalyptic'?7:3;
+  const numCastles=settlementCount==='none'?0:settlementCount==='few'?1:settlementCount==='many'?4:2;
+  const usedR=new Set(),usedC=new Set();
+  for(let ri=0;ri<numRuins*8&&[...usedR].length<numRuins;ri++){
+    const rc=2+Math.floor(rng2()*(COLS-4)),rr=2+Math.floor(rng2()*(ROWS-4));
+    if((hm[rr]?.[rc]||0)<wt+0.04)continue;
+    const id=grid[rr]?.[rc]?.id;
+    if(!id||['OCEAN','DEEP_OCEAN','COAST','LAKE','RIVER'].includes(id))continue;
+    let nm;do{nm=RUINS_N[Math.floor(rng2()*RUINS_N.length)];}while(usedR.has(nm));
+    usedR.add(nm);grid[rr][rc]={id:'RUINS',label:nm};
+  }
+  for(let ci=0;ci<numCastles*8&&[...usedC].length<numCastles;ci++){
+    const cc=2+Math.floor(rng2()*(COLS-4)),cr=2+Math.floor(rng2()*(ROWS-4));
+    if((hm[cr]?.[cc]||0)<wt+0.05)continue;
+    const id=grid[cr]?.[cc]?.id;
+    if(!id||['OCEAN','DEEP_OCEAN','COAST','LAKE','RIVER','RUINS'].includes(id))continue;
+    let nm;do{nm=CASTLE_N[Math.floor(rng2()*CASTLE_N.length)];}while(usedC.has(nm));
+    usedC.add(nm);grid[cr][cc]={id:'CASTLE',label:nm};
+  }
+
+  // Settlements
+  const numS=settlementCount==='none'?0:settlementCount==='few'?4:settlementCount==='many'?16:8;
+  const usedN=new Set();
+  for(let si=0;si<numS;si++){
+    let att=0;while(att<80){
+      const sc=2+Math.floor(rng2()*(COLS-4)),sr=2+Math.floor(rng2()*(ROWS-4));
+      if((hm[sr]?.[sc]||0)<wt+0.04){att++;continue;}
+      const id=grid[sr]?.[sc]?.id;
+      if(!id||['OCEAN','DEEP_OCEAN','LAKE','RIVER','RUINS','CASTLE'].includes(id)){att++;continue;}
+      let nm;do{nm=TOWNS[Math.floor(rng2()*TOWNS.length)];}while(usedN.has(nm));
+      usedN.add(nm);
+      const{x,y}=hexCtr(sc,sr,R);
+      settlements.push({col:sc,row:sr,px:x,py:y,name:nm,isCity:rng2()>0.55,road:rng2()>0.45});
+      break;
+    }
+  }
+
+  // Legend
+  const seen=new Set();grid.forEach(row=>row.forEach(t=>{if(t&&!['RUINS','CASTLE'].includes(t.id))seen.add(t.id);}));
+  let legHtml=[...seen].slice(0,12).map(id=>`<div class="li"><div class="ls" style="background:${LEGCOL[id]||'#444'}"></div><span>${LEGLBL[id]||id}</span></div>`).join('');
+  if(numRuins>0)legHtml+=`<div class="li"><div class="ls" style="background:${LEGCOL.RUINS}"></div><span>Ruins</span></div>`;
+  if(numCastles>0)legHtml+=`<div class="li"><div class="ls" style="background:${LEGCOL.CASTLE}"></div><span>Castle</span></div>`;
+  if(numS>0)legHtml+=`<div class="li"><div class="ls" style="background:#c8a828;border-radius:50%"></div><span>Town</span></div>`;
+  document.getElementById('legend').innerHTML=legHtml;
 
   renderMap();refreshList();setTimeout(centerMap,50);
 }
 
-// ── Event listeners (unchanged) ───────────────────────────────────────────────
+// ── Event listeners ───────────────────────────────────────────────────────────
 document.getElementById('forgeBtn').addEventListener('click',()=>{
   const btn=document.getElementById('forgeBtn');
   btn.textContent='⏳ FORGING…';btn.disabled=true;
@@ -593,14 +701,43 @@ document.getElementById('forgeBtn').addEventListener('click',()=>{
 document.getElementById('rngBtn').onclick=()=>{document.getElementById('seedIn').value=Math.floor(Math.random()*999999);};
 document.getElementById('saveBtn').onclick=()=>{const a=document.createElement('a');a.download='realmforge.png';a.href=canvas.toDataURL('image/png');a.click();};
 
-// Pan/zoom/click/rename code remains the same as your original...
-// (omitted here for length - keep your existing listeners)
+// ── Pan / zoom / etc. (basic implementation - add your full version if needed) ──
+function centerMap(){
+  const ar=document.getElementById('mapArea').getBoundingClientRect();
+  ox=Math.max(0,(ar.width-canvas.width*zoom)/2);
+  oy=Math.max(0,(ar.height-canvas.height*zoom)/2);
+  canvas.style.left=ox+'px';canvas.style.top=oy+'px';
+  applyZoom();
+}
+function applyZoom(){
+  canvas.style.transform=`scale(${zoom})`;
+  canvas.style.transformOrigin='top left';
+  document.getElementById('zLbl').textContent=Math.round(zoom*100)+'%';
+}
 
-function centerMap(){const ar=mapArea.getBoundingClientRect();ox=Math.max(0,(ar.width-canvas.width*zoom)/2);oy=Math.max(0,(ar.height-canvas.height*zoom)/2);canvas.style.left=ox+'px';canvas.style.top=oy+'px';applyZoom();}
-function applyZoom(){canvas.style.transform=`scale(${zoom})`;canvas.style.transformOrigin='top left';document.getElementById('zLbl').textContent=Math.round(zoom*100)+'%';}
+document.getElementById('zIn').onclick=()=>{zoom=Math.min(zoom*1.2,4);applyZoom();};
+document.getElementById('zOut').onclick=()=>{zoom=Math.max(zoom/1.2,0.25);applyZoom();};
+document.getElementById('zRst').onclick=()=>{zoom=1;centerMap();};
 
-// ... rest of your pan/zoom/rename/refreshList code here (unchanged)
+const mapArea=document.getElementById('mapArea');
+mapArea.onmousedown=e=>{dragging=true;dsx=e.clientX;dsy=e.clientY;dox=ox;doy=oy;canvas.classList.add('drag');};
+mapArea.onmousemove=e=>{if(!dragging)return;ox=dox+(e.clientX-dsx);oy=doy+(e.clientY-dsy);canvas.style.left=ox+'px';canvas.style.top=oy+'px';};
+mapArea.onmouseup=()=>{dragging=false;canvas.classList.remove('drag');};
+mapArea.onmouseleave=()=>{dragging=false;canvas.classList.remove('drag');};
 
+function refreshList(){
+  const list=document.getElementById('townList');
+  list.innerHTML='';
+  settlements.forEach((s,i)=>{
+    const el=document.createElement('div');
+    el.className='ti';
+    el.innerHTML=`<div class="td ${s.isCity?'c':''}"></div><input type="text" value="${s.name}" data-idx="${i}"/>`;
+    list.appendChild(el);
+  });
+}
+
+// Initial center
+centerMap();
 </script>
 </body>
 </html>
