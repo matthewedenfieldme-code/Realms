@@ -94,6 +94,27 @@ select:focus{border-color:var(--gold);}select option{background:#181e2a;}
 .renca{flex:1;padding:4px;background:var(--p2);color:var(--soft);border:1px solid var(--brd);border-radius:2px;font-size:.65rem;cursor:pointer;}
 .progress{position:absolute;bottom:0;left:0;right:0;height:2px;background:rgba(200,160,48,.15);z-index:600;display:none;}
 .progress-bar{height:100%;background:var(--gold);width:0;transition:width .15s;}
+
+/* ── Minimap ── */
+#minimap{position:absolute;bottom:52px;right:12px;z-index:50;border:1px solid var(--brd);border-radius:3px;background:#020508;display:none;box-shadow:0 2px 12px rgba(0,0,0,.7);}
+#minimap-viewport{position:absolute;border:1px solid rgba(200,160,48,.7);pointer-events:none;box-sizing:border-box;}
+/* ── Lore panel ── */
+.lore-btn{width:100%;padding:8px;background:linear-gradient(180deg,#2a1a40,#1a1030);color:#c090e0;border:1px solid #4a2a70;border-radius:4px;font-family:'Cinzel',serif;font-size:.75rem;font-weight:600;letter-spacing:.08em;cursor:pointer;text-transform:uppercase;transition:all .15s;}
+.lore-btn:hover{background:linear-gradient(180deg,#3a2a50,#2a1a40);}
+.lore-btn:disabled{opacity:.4;cursor:not-allowed;}
+.lore-panel{background:var(--p2);border:1px solid var(--brd);border-radius:4px;padding:8px 9px;font-size:.67rem;line-height:1.65;color:var(--tx);display:none;max-height:220px;overflow-y:auto;scrollbar-width:thin;}
+.lore-panel h4{font-family:'Cinzel',serif;font-size:.65rem;color:#c090e0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;margin-top:8px;}
+.lore-panel h4:first-child{margin-top:0;}
+.lore-panel p{color:var(--soft);margin-bottom:4px;}
+.lore-loading{display:flex;align-items:center;gap:6px;font-size:.65rem;color:var(--mut);padding:6px 0;}
+.lore-spinner{width:12px;height:12px;border:2px solid var(--brd);border-top-color:#c090e0;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+/* ── Export btn ── */
+.export-btn{width:100%;padding:7px;background:transparent;color:var(--gold);border:1px solid rgba(200,160,48,.4);border-radius:3px;font-size:.68rem;cursor:pointer;transition:all .12s;text-align:center;letter-spacing:.04em;}
+.export-btn:hover{background:rgba(200,160,48,.08);border-color:var(--gold);}
+/* ── Region overlay ── */
+#rc{position:absolute;top:0;left:0;pointer-events:none;}
+.region-mode-hint{position:absolute;top:52px;left:50%;transform:translateX(-50%);background:rgba(80,40,120,.92);border:1px solid #6a3a90;border-radius:14px;padding:4px 14px;font-size:.62rem;color:#d0a0f0;pointer-events:none;display:none;white-space:nowrap;z-index:60;}
 </style>
 </head>
 <body>
@@ -181,6 +202,9 @@ select:focus{border-color:var(--gold);}select option{background:#181e2a;}
     <button class="svb" id="saveBtn">↓ Save PNG</button>
     <button class="unb" id="undoBtn" disabled>↩ Undo</button>
   </div>
+  <button class="lore-btn" id="loreBtn" disabled>✦ Chronicle This Realm</button>
+  <div id="lorePanel" class="lore-panel"></div>
+  <button class="export-btn" id="exportBtn" disabled>🖼 Export Decorated Map</button>
   <hr class="dv"/>
   <div class="sh">Legend</div>
   <div class="lg" id="legend"><div style="font-size:.62rem;color:var(--mut)">Generate first</div></div>
@@ -241,6 +265,10 @@ select:focus{border-color:var(--gold);}select option{background:#181e2a;}
       <button class="renca" id="renCa">✕</button>
     </div>
   </div>
+  <canvas id="minimap" width="160" height="100"></canvas>
+  <div id="minimap-viewport"></div>
+  <canvas id="rc"></canvas>
+  <div class="region-mode-hint" id="regionHint">🗺 Region Paint — drag to paint · click region to name · Esc to exit</div>
   <div class="progress" id="pgBar"><div class="progress-bar" id="pgFill"></div></div>
 </div>
 </div>
@@ -1039,6 +1067,394 @@ document.getElementById('forgeBtn').addEventListener('click',function(){
 });
 document.getElementById('rngBtn').onclick=function(){document.getElementById('seedIn').value=~~(Math.random()*999999);};
 document.getElementById('saveBtn').onclick=function(){var a=document.createElement('a');a.download='realmforge.png';a.href=canvas.toDataURL('image/png');a.click();};
+
+// ── Minimap ────────────────────────────────────────────────────────────────
+var mmCanvas=document.getElementById('minimap');
+var mmCtx=mmCanvas.getContext('2d');
+var mmScale=0;
+
+function updateMinimap(){
+  if(!grid.length)return;
+  var W=canvas.width,H=canvas.height;
+  var maxW=180,maxH=120;
+  mmScale=Math.min(maxW/W,maxH/H);
+  var mW=~~(W*mmScale),mH=~~(H*mmScale);
+  mmCanvas.width=mW;mmCanvas.height=mH;
+  mmCanvas.style.display='block';
+  // Draw scaled version of main canvas
+  mmCtx.drawImage(canvas,0,0,mW,mH);
+  updateMinimapViewport();
+}
+
+function updateMinimapViewport(){
+  if(!mmScale)return;
+  var ar=mapArea.getBoundingClientRect();
+  var vx=(-ox/zoom)*mmScale,vy=(-oy/zoom)*mmScale;
+  var vw=(ar.width/zoom)*mmScale,vh=(ar.height/zoom)*mmScale;
+  var vp=document.getElementById('minimap-viewport');
+  var mm=document.getElementById('minimap');
+  var mr=mm.getBoundingClientRect(),ar2=mapArea.getBoundingClientRect();
+  vp.style.left=(mm.offsetLeft+Math.max(0,vx))+'px';
+  vp.style.top=(mm.offsetTop+Math.max(0,vy))+'px';
+  vp.style.width=Math.min(vw,mmCanvas.width)+'px';
+  vp.style.height=Math.min(vh,mmCanvas.height)+'px';
+  vp.style.display='block';
+}
+
+// Click minimap to jump to location
+document.getElementById('minimap').addEventListener('click',function(e){
+  if(!mmScale)return;
+  var r=mmCanvas.getBoundingClientRect();
+  var mx=e.clientX-r.left,my=e.clientY-r.top;
+  var wx=mx/mmScale,wy=my/mmScale;
+  var ar=mapArea.getBoundingClientRect();
+  ox=ar.width/2-wx*zoom;
+  oy=ar.height/2-wy*zoom;
+  applyTransform();updateMinimapViewport();
+});
+
+// ── Region Painting ────────────────────────────────────────────────────────
+var regionCanvas=document.getElementById('rc');
+var rctx=regionCanvas.getContext('2d');
+var regions=[]; // [{cells:Set<'col,row'>, color, name, labelX, labelY}]
+var REGION_COLORS=['rgba(180,60,60,.38)','rgba(60,120,180,.38)','rgba(60,160,80,.38)',
+  'rgba(180,140,40,.38)','rgba(140,60,180,.38)','rgba(180,100,40,.38)','rgba(40,160,160,.38)'];
+var regionMode=false,paintingRegion=false,activeRegionIdx=-1;
+var regionNamePopEl=null;
+
+function toggleRegionMode(){
+  regionMode=!regionMode;
+  document.getElementById('regionHint').style.display=regionMode?'block':'none';
+  regionCanvas.style.pointerEvents=regionMode?'auto':'none';
+  if(regionMode){
+    activeRegionIdx=regions.length;
+    regions.push({cells:new Set(),color:REGION_COLORS[regions.length%REGION_COLORS.length],name:'',labelX:0,labelY:0});
+  }
+}
+
+// Add Region mode button to mode-bar via JS
+(function(){
+  var mb=document.querySelector('.mode-bar');
+  var rb=document.createElement('button');
+  rb.className='mode-btn';rb.id='modeRegion';rb.textContent='🗺 Region';rb.title='Paint territory regions';
+  rb.onclick=function(){toggleRegionMode();rb.className='mode-btn'+(regionMode?' on':'');};
+  mb.appendChild(rb);
+})();
+
+regionCanvas.addEventListener('mousedown',function(e){
+  if(!regionMode)return;
+  e.stopPropagation();
+  paintingRegion=true;
+  paintRegionAt(e);
+});
+regionCanvas.addEventListener('mousemove',function(e){
+  if(!regionMode||!paintingRegion)return;
+  paintRegionAt(e);
+});
+regionCanvas.addEventListener('mouseup',function(){paintingRegion=false;});
+
+function paintRegionAt(e){
+  var rect=mapArea.getBoundingClientRect();
+  var mx=(e.clientX-rect.left-ox)/zoom,my=(e.clientY-rect.top-oy)/zoom;
+  var pi=Math.round(mx),pj=Math.round(my);
+  if(!hexLookup||pi<0||pi>=canvas.width||pj<0||pj>=canvas.height)return;
+  var idx=hexLookup[pj*canvas.width+pi];
+  if(idx<0)return;
+  var col=idx%COLS,row=~~(idx/COLS);
+  var key=col+','+row;
+  if(regions[activeRegionIdx].cells.has(key))return;
+  regions[activeRegionIdx].cells.add(key);
+  drawRegions();
+}
+
+function drawRegions(){
+  rctx.clearRect(0,0,regionCanvas.width,regionCanvas.height);
+  regions.forEach(function(reg){
+    if(!reg.cells.size)return;
+    rctx.fillStyle=reg.color;
+    reg.cells.forEach(function(key){
+      var parts=key.split(','),col=+parts[0],row=+parts[1];
+      var c=hexCtr(col,row,HexR),v=hexVerts(c.x,c.y,HexR);
+      rctx.beginPath();rctx.moveTo(v[0][0],v[0][1]);
+      for(var k=1;k<6;k++)rctx.lineTo(v[k][0],v[k][1]);
+      rctx.closePath();rctx.fill();
+    });
+    // Draw region name
+    if(reg.name&&reg.labelX){
+      rctx.font="bold 13px 'Cinzel',serif";rctx.textAlign='center';rctx.textBaseline='middle';
+      rctx.fillStyle='rgba(0,0,0,.6)';rctx.fillText(reg.name,reg.labelX+1,reg.labelY+1);
+      rctx.fillStyle='rgba(255,240,200,.95)';rctx.fillText(reg.name,reg.labelX,reg.labelY);
+    }
+  });
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&regionMode){
+    // Compute label center for last region
+    if(regions[activeRegionIdx]&&regions[activeRegionIdx].cells.size){
+      var xs=0,ys=0,n=0;
+      regions[activeRegionIdx].cells.forEach(function(key){
+        var p=key.split(','),c=hexCtr(+p[0],+p[1],HexR);xs+=c.x;ys+=c.y;n++;
+      });
+      regions[activeRegionIdx].labelX=xs/n;regions[activeRegionIdx].labelY=ys/n;
+      // Prompt for name
+      var nm=prompt('Name this region:','');
+      if(nm)regions[activeRegionIdx].name=nm;
+      drawRegions();
+    }
+    regionMode=false;
+    document.getElementById('regionHint').style.display='none';
+    document.getElementById('modeRegion').className='mode-btn';
+  }
+});
+
+// ── Lore Generation ────────────────────────────────────────────────────────
+document.getElementById('loreBtn').addEventListener('click',generateLore);
+
+function buildMapSummary(){
+  var counts={};
+  grid.forEach(function(row){row.forEach(function(t){if(t){counts[t.id]=(counts[t.id]||0)+1;}});});
+  var total=COLS*ROWS;
+  var terrainList=Object.keys(counts).map(function(k){
+    return {id:k,label:T[k]?T[k].label:k,pct:Math.round(counts[k]/total*100)};
+  }).sort(function(a,b){return b.pct-a.pct;}).slice(0,8);
+  var ruins=[];var castles=[];
+  grid.forEach(function(row){row.forEach(function(t){
+    if(t&&t.id==='RUINS'&&t.label)ruins.push(t.label);
+    if(t&&t.id==='CASTLE'&&t.label)castles.push(t.label);
+  });});
+  var townNames=settlements.filter(function(s){return!s.isCity;}).map(function(s){return s.name;});
+  var cityNames=settlements.filter(function(s){return s.isCity;}).map(function(s){return s.name;});
+  var mapTitle=document.getElementById('mapTitleTxt').textContent;
+  var era=document.getElementById('era').value;
+  var eraLabel={'medieval':'Medieval Fantasy','ancient':'Ancient / Mythic','dark':'Dark Ages','apocalyptic':'Post-Apocalyptic','magitech':'Magitech / Arcane'}[era]||era;
+  return {mapTitle,era:eraLabel,terrainList,ruins,castles,townNames,cityNames};
+}
+
+async function generateLore(){
+  var btn=document.getElementById('loreBtn');
+  var panel=document.getElementById('lorePanel');
+  btn.disabled=true;btn.textContent='✦ Chronicling…';
+  panel.style.display='block';
+  panel.innerHTML='<div class="lore-loading"><div class="lore-spinner"></div>The chronicler writes…</div>';
+  var summary=buildMapSummary();
+  var prompt=`You are a fantasy world chronicler. Based on this map data, write rich, evocative world lore in 4 short sections. Use the EXACT realm name and location names provided.
+
+REALM: ${summary.mapTitle}
+ERA: ${summary.era}
+TERRAIN (most to least common): ${summary.terrainList.map(function(t){return t.label+' ('+t.pct+'%)';}).join(', ')}
+CITIES: ${summary.cityNames.join(', ')||'none'}
+TOWNS: ${summary.townNames.slice(0,6).join(', ')||'none'}
+RUINS: ${summary.ruins.join(', ')||'none'}
+CASTLES: ${summary.castles.join(', ')||'none'}
+
+Write exactly 4 sections with these HTML tags (no markdown, no backticks):
+<h4>History</h4><p>2-3 sentences about the realm's origin and age.</p>
+<h4>The Land</h4><p>2-3 sentences describing the geography and what it means for inhabitants.</p>
+<h4>Power & Factions</h4><p>2-3 sentences about who rules, key strongholds, and conflicts.</p>
+<h4>Legends & Mysteries</h4><p>2-3 sentences weaving in the ruins and strange places.</p>
+
+Be specific — use the actual names. Keep total length under 220 words. Output ONLY the 4 HTML sections, nothing else.`;
+
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:600,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    var data=await resp.json();
+    var text=(data.content&&data.content[0]&&data.content[0].text)||'';
+    text=text.replace(/```html?|```/g,'').trim();
+    panel.innerHTML=text||'<p>The chronicler fell silent.</p>';
+  }catch(err){
+    panel.innerHTML='<p style="color:var(--red)">The chronicler could not be reached.</p>';
+  }
+  btn.disabled=false;btn.textContent='✦ Chronicle This Realm';
+}
+
+// ── Decorated Export ────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click',exportDecoratedMap);
+
+function exportDecoratedMap(){
+  var border=60;
+  var src=canvas;
+  var W=src.width,H=src.height;
+  var eW=W+border*2,eH=H+border*2+50;
+  var ec=document.createElement('canvas');ec.width=eW;ec.height=eH;
+  var ectx=ec.getContext('2d');
+
+  // Parchment background
+  var bg=ectx.createLinearGradient(0,0,eW,eH);
+  bg.addColorStop(0,'#1a1408');bg.addColorStop(.5,'#0e0c06');bg.addColorStop(1,'#1a1408');
+  ectx.fillStyle=bg;ectx.fillRect(0,0,eW,eH);
+
+  // Vignette corners
+  var corners=[[0,0],[eW,0],[eW,eH],[0,eH]];
+  corners.forEach(function(pt){
+    var vg=ectx.createRadialGradient(pt[0],pt[1],0,pt[0],pt[1],eW*.6);
+    vg.addColorStop(0,'rgba(0,0,0,.55)');vg.addColorStop(1,'rgba(0,0,0,0)');
+    ectx.fillStyle=vg;ectx.fillRect(0,0,eW,eH);
+  });
+
+  // Outer decorative border
+  ectx.strokeStyle='#8a6a20';ectx.lineWidth=3;
+  roundRect(ectx,8,8,eW-16,eH-16,6);ectx.stroke();
+  ectx.strokeStyle='rgba(200,160,48,.4)';ectx.lineWidth=1;
+  roundRect(ectx,14,14,eW-28,eH-28,4);ectx.stroke();
+  roundRect(ectx,18,18,eW-36,eH-36,3);ectx.stroke();
+
+  // Corner ornaments
+  drawCornerOrn(ectx,24,24);drawCornerOrn(ectx,eW-24,24,true);
+  drawCornerOrn(ectx,24,eH-24,false,true);drawCornerOrn(ectx,eW-24,eH-24,true,true);
+
+  // Map image
+  ectx.save();
+  roundRect(ectx,border,border,W,H,4);ectx.clip();
+  ectx.drawImage(src,border,border);
+  ectx.restore();
+
+  // Thin gold frame around map
+  ectx.strokeStyle='rgba(200,160,48,.6)';ectx.lineWidth=1.5;
+  roundRect(ectx,border,border,W,H,4);ectx.stroke();
+
+  // Title at bottom
+  var titleY=H+border+28;
+  var title=document.getElementById('mapTitleTxt').textContent||'Realm Map';
+  ectx.font="bold 28px 'Georgia',serif";ectx.textAlign='center';ectx.textBaseline='middle';
+  ectx.fillStyle='rgba(0,0,0,.7)';ectx.fillText(title,eW/2+2,titleY+2);
+  var tg=ectx.createLinearGradient(eW/2-120,titleY,eW/2+120,titleY);
+  tg.addColorStop(0,'#8a6a20');tg.addColorStop(.5,'#f0c840');tg.addColorStop(1,'#8a6a20');
+  ectx.fillStyle=tg;ectx.fillText(title,eW/2,titleY);
+
+  // Title line decorations
+  ectx.strokeStyle='rgba(200,160,48,.5)';ectx.lineWidth=1;
+  var tw=ectx.measureText(title).width;
+  ectx.beginPath();ectx.moveTo(eW/2-tw/2-20,titleY);ectx.lineTo(eW/2-tw/2-8,titleY);ectx.stroke();
+  ectx.beginPath();ectx.moveTo(eW/2+tw/2+8,titleY);ectx.lineTo(eW/2+tw/2+20,titleY);ectx.stroke();
+
+  // Compass rose (top-right corner of map area)
+  drawCompassRose(ectx,eW-border-44,border+44,36);
+
+  // Legend strip (bottom-left of border)
+  drawExportLegend(ectx,border+10,H+border+12);
+
+  // Seed watermark
+  ectx.font="10px monospace";ectx.textAlign='right';ectx.fillStyle='rgba(200,160,48,.25)';
+  ectx.fillText('Realm Forge · '+document.getElementById('seedPill').textContent,eW-20,eH-10);
+
+  var a=document.createElement('a');
+  a.download='realm-'+Date.now()+'.png';
+  a.href=ec.toDataURL('image/png');a.click();
+}
+
+function roundRect(ctx2,x,y,w,h,r){
+  ctx2.beginPath();ctx2.moveTo(x+r,y);ctx2.lineTo(x+w-r,y);ctx2.arcTo(x+w,y,x+w,y+r,r);
+  ctx2.lineTo(x+w,y+h-r);ctx2.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx2.lineTo(x+r,y+h);ctx2.arcTo(x,y+h,x,y+h-r,r);
+  ctx2.lineTo(x,y+r);ctx2.arcTo(x,y,x+r,y,r);ctx2.closePath();
+}
+
+function drawCornerOrn(ctx2,x,y,flipX,flipY){
+  ctx2.save();ctx2.translate(x,y);
+  if(flipX)ctx2.scale(-1,1);if(flipY)ctx2.scale(1,-1);
+  ctx2.strokeStyle='rgba(200,160,48,.55)';ctx2.lineWidth=1.2;
+  ctx2.beginPath();ctx2.moveTo(0,-14);ctx2.lineTo(0,0);ctx2.lineTo(14,0);ctx2.stroke();
+  ctx2.beginPath();ctx2.arc(0,0,5,0,-Math.PI/2,true);ctx2.stroke();
+  ctx2.fillStyle='rgba(200,160,48,.55)';
+  ctx2.beginPath();ctx2.arc(0,0,2.5,0,Math.PI*2);ctx2.fill();
+  ctx2.restore();
+}
+
+function drawCompassRose(ctx2,cx,cy,r){
+  var dirs=[['N',0],['E',90],['S',180],['W',270]];
+  // Shadow
+  ctx2.fillStyle='rgba(0,0,0,.4)';ctx2.beginPath();ctx2.arc(cx+2,cy+2,r+2,0,Math.PI*2);ctx2.fill();
+  // Background circle
+  var bg2=ctx2.createRadialGradient(cx,cy,0,cx,cy,r);
+  bg2.addColorStop(0,'rgba(30,20,8,.9)');bg2.addColorStop(1,'rgba(10,8,4,.9)');
+  ctx2.fillStyle=bg2;ctx2.beginPath();ctx2.arc(cx,cy,r+2,0,Math.PI*2);ctx2.fill();
+  ctx2.strokeStyle='rgba(200,160,48,.4)';ctx2.lineWidth=1;
+  ctx2.beginPath();ctx2.arc(cx,cy,r,0,Math.PI*2);ctx2.stroke();
+  // Points
+  [0,45,90,135,180,225,270,315].forEach(function(a,i){
+    var rad=a*Math.PI/180,isCard=i%2===0;
+    var len=isCard?r*.85:r*.55;
+    var wid=isCard?r*.22:r*.1;
+    ctx2.save();ctx2.translate(cx,cy);ctx2.rotate(rad);
+    ctx2.beginPath();ctx2.moveTo(0,-len);ctx2.lineTo(wid,0);ctx2.lineTo(0,r*.15);ctx2.lineTo(-wid,0);ctx2.closePath();
+    if(isCard&&a===0){var ng=ctx2.createLinearGradient(0,-len,0,0);ng.addColorStop(0,'#e04040');ng.addColorStop(1,'#802020');ctx2.fillStyle=ng;}
+    else{var ng2=ctx2.createLinearGradient(-wid,0,wid,0);ng2.addColorStop(0,'rgba(200,160,48,.7)');ng2.addColorStop(.5,'rgba(240,200,80,1)');ng2.addColorStop(1,'rgba(200,160,48,.7)');ctx2.fillStyle=ng2;}
+    ctx2.fill();
+    ctx2.strokeStyle='rgba(0,0,0,.4)';ctx2.lineWidth=.5;ctx2.stroke();
+    ctx2.restore();
+  });
+  // Center jewel
+  ctx2.fillStyle='#c8a030';ctx2.beginPath();ctx2.arc(cx,cy,r*.1,0,Math.PI*2);ctx2.fill();
+  // Cardinal labels
+  dirs.forEach(function(d){
+    var rad=d[1]*Math.PI/180,lx=cx+Math.sin(rad)*(r+11),ly=cy-Math.cos(rad)*(r+11);
+    ctx2.font="bold 11px 'Georgia',serif";ctx2.textAlign='center';ctx2.textBaseline='middle';
+    ctx2.fillStyle='rgba(0,0,0,.6)';ctx2.fillText(d[0],lx+1,ly+1);
+    ctx2.fillStyle=d[0]==='N'?'#f06060':'#f0c840';ctx2.fillText(d[0],lx,ly);
+  });
+}
+
+function drawExportLegend(ctx2,x,y){
+  var seen={};
+  grid.forEach(function(row){row.forEach(function(t){if(t&&T[t.id]&&!['RUINS','CASTLE'].includes(t.id))seen[t.id]=T[t.id];});});
+  if(settlements.some(function(s){return!s.isCity;}))seen['_town']={lc:'#c09820',label:'Town'};
+  if(settlements.some(function(s){return s.isCity;}))seen['_city']={lc:'#c03838',label:'City'};
+  var items=Object.values(seen).slice(0,10);
+  var cols=Math.ceil(items.length/2),col=0,row2=0;
+  ctx2.font="9px 'Open Sans',sans-serif";ctx2.textBaseline='middle';
+  items.forEach(function(item){
+    var lx=x+col*80,ly=y+row2*14;
+    ctx2.fillStyle=item.lc;ctx2.fillRect(lx,ly-4,10,8);
+    ctx2.fillStyle='rgba(200,185,140,.85)';ctx2.fillText(item.label,lx+13,ly);
+    row2++;if(row2>=2){row2=0;col++;}
+  });
+}
+
+// ── Hook into generate/render to update minimap and enable buttons ──────────
+var _origRerenderAll=rerenderAll;
+rerenderAll=function(){
+  _origRerenderAll();
+  setTimeout(updateMinimap,50);
+  // Also redraw regions on top
+  if(regions.length)drawRegions();
+};
+
+var _origRerenderDecals=rerenderDecals;
+rerenderDecals=function(){
+  _origRerenderDecals();
+  if(regions.length)drawRegions();
+};
+
+// Sync pan/zoom with minimap viewport
+var _origApplyTransform=applyTransform;
+applyTransform=function(){_origApplyTransform();updateMinimapViewport();};
+var _origApplyZoom=applyZoom;
+applyZoom=function(){_origApplyZoom();updateMinimapViewport();};
+
+// Enable lore/export after generation
+var _origGenerate=generate;
+generate=function(){
+  _origGenerate();
+  // Size region canvas to match map canvas
+  var rc=document.getElementById('rc');
+  rc.width=canvas.width;rc.height=canvas.height;
+  rc.style.left=canvas.style.left;rc.style.top=canvas.style.top;
+  rc.style.transform=canvas.style.transform;rc.style.transformOrigin='top left';
+  regions=[];drawRegions();
+  document.getElementById('loreBtn').disabled=false;
+  document.getElementById('exportBtn').disabled=false;
+  document.getElementById('lorePanel').style.display='none';
+};
+
 </script>
 </body>
 </html>
