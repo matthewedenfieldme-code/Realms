@@ -314,102 +314,94 @@ function fbm(n,x,y,oct){
 }
 
 // ── Hex math ──────────────────────────────────────────────────────────────────
-function hexCtr(col,row,R){return{x:R*1.5*col+R,y:R*SQ3*(row+(col%2?.5:0))+R*SQ3/2};}
-function hexVerts(cx,cy,R){var v=[];for(var i=0;i<6;i++){var a=Math.PI/3*i;v.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}return v;}
-function ptInHex(px,py,verts){for(var i=0;i<6;i++){var a=verts[i],b=verts[(i+1)%6];if((px-a[0])*(a[1]-b[1])+(py-a[1])*(b[0]-a[0])<0)return false;}return true;}
+// ── Isometric 3D Hex Math ────────────────────────────────────────────────────
+// ISO projection: flat hex grid -> isometric screen coords with elevation
+// Each hex has a "height" that lifts it up; sides are drawn as extruded walls
 
-// ── Terrain definitions ───────────────────────────────────────────────────────
-var T={
-  DEEP_OCEAN:{lc:'#0a1e38',label:'Deep Ocean',water:true,
-    px:function(x,y,n,m){return[~~(12+n*15+m*6),~~(28+n*22+m*10),~~(60+n*22+m*10)];}},
-  OCEAN:{lc:'#122c52',label:'Ocean',water:true,
-    px:function(x,y,n,m){return[~~(18+n*18+m*8),~~(46+n*26+m*12),~~(92+n*24+m*10)];}},
-  COAST:{lc:'#1e5080',label:'Coast',water:true,
-    px:function(x,y,n,m){return[~~(26+n*24+m*10),~~(72+n*30+m*12),~~(128+n*20+m*8)];}},
-  SHALLOW:{lc:'#2e70a8',label:'Shallow',water:true,
-    px:function(x,y,n,m){return[~~(42+n*32+m*12),~~(100+n*35+m*14),~~(162+n*18+m*8)];}},
-  PLAINS:{lc:'#788c28',label:'Plains',
-    px:function(x,y,n,m,hx,hy){
-      var ck=(Math.floor((hx+1)*3.5)+Math.floor((hy+1)*3.5))%2;
-      var v=n*.2+m*.1+.66;
-      return ck?[~~(148*v),~~(140*v),~~(70*v)]:[~~(84*v),~~(113*v),~~(40*v)];}},
-  GRASSLAND:{lc:'#2e6818',label:'Grassland',
-    px:function(x,y,n,m){var v=n*.3+m*.15+.55;return[~~(36*v),~~(80*v),~~(26*v)];}},
-  FOREST:{lc:'#1a4e10',label:'Forest',
-    px:function(x,y,n,m){var v=(n*.35+m*.2+.45)*(n<.35?.72:1);return[~~(22*v),~~(56*v),~~(14*v)];}},
-  JUNGLE:{lc:'#0e4008',label:'Jungle',
-    px:function(x,y,n,m){var v=(n*.3+m*.18+.52)*(n<.4?.66:1);return[~~(14*v),~~(48*v),~~(10*v)];}},
-  HILLS:{lc:'#6a5020',label:'Hills',
-    px:function(x,y,n,m){var v=n*.28+m*.15+.57;return[~~(102*v),~~(95*v),~~(46*v)];}},
-  MOUNTAINS:{lc:'#585045',label:'Mountains',
-    px:function(x,y,n,m){
-      if(n>.72){var s=n*.4+.58;return[~~(202*s),~~(210*s),~~(220*s)];}
-      var v=n*.32+m*.16+.52;return[~~(80*v),~~(76*v),~~(68*v)];}},
-  SNOW_PEAK:{lc:'#a0b0bc',label:'Snow Peak',
-    px:function(x,y,n,m){var v=n*.3+m*.12+.6;return[~~(183*v),~~(195*v),~~(210*v)];}},
-  DESERT:{lc:'#b89025',label:'Desert',
-    px:function(x,y,n,m,hx,hy){var rp=Math.sin((hx+hy)*6+n*3)*.06+1;var v=(n*.25+m*.12+.63)*rp;return[~~(185*v),~~(155*v),~~(68*v)];}},
-  SAVANNA:{lc:'#907018',label:'Savanna',
-    px:function(x,y,n,m){var v=n*.22+m*.12+.66;var d=n>.6?.92:1;return[~~(158*v*d),~~(135*v*d),~~(50*v*d)];}},
-  TUNDRA:{lc:'#607068',label:'Tundra',
-    px:function(x,y,n,m){var v=n*.25+m*.1+.65;return[~~(86*v),~~(100*v),~~(92*v)];}},
-  SNOW:{lc:'#98b0b0',label:'Snow',
-    px:function(x,y,n,m){var v=n*.2+m*.08+.72;return[~~(186*v),~~(198*v),~~(208*v)];}},
-  SWAMP:{lc:'#223818',label:'Swamp',
-    px:function(x,y,n,m){var wet=m>.52?.5:0;var v=n*.25+m*.12+.55;return[~~((28+wet*8)*v),~~((50+wet*5)*v),~~((20+wet*14)*v)];}},
-  VOLCANIC:{lc:'#3a1508',label:'Volcanic',
-    px:function(x,y,n,m){var v=n*.28+m*.1+.62;return[~~(60*v),~~(36*v),~~(20*v)];}},
-  LAVA:{lc:'#a01808',label:'Lava',
-    px:function(x,y,n,m){var g=n>.62?n*.5+.5:0;var v=n*.3+m*.1+.6;return[clamp(~~(138*v+g*138),0,255),clamp(~~(36*v+g*48),0,255),~~(8*v)];}},
-  RIVER:{lc:'#1450a0',label:'River',water:true,
-    px:function(x,y,n,m){return[~~(24+n*22+m*8),~~(68+n*34+m*12),~~(142+n*22+m*8)];}},
-  LAKE:{lc:'#102e60',label:'Lake',water:true,
-    px:function(x,y,n,m){return[~~(16+n*18+m*8),~~(52+n*28+m*10),~~(108+n*26+m*8)];}},
-  RUINS:{lc:'#30201a',label:'Ruins',
-    px:function(x,y,n,m){var v=n*.25+m*.1+.65;return[~~(70*v),~~(58*v),~~(40*v)];}},
-  CASTLE:{lc:'#202035',label:'Castle',
-    px:function(x,y,n,m){var v=n*.22+m*.1+.68;return[~~(50*v),~~(50*v),~~(66*v)];}},
+var ISO_ANG = Math.PI/6; // 30 degrees
+var ISO_COS = Math.cos(ISO_ANG); // 0.866
+var ISO_SIN = Math.sin(ISO_ANG); // 0.5
+
+// Terrain elevation table (0=ocean floor, 1=sea level, higher=elevated)
+var ELEV = {
+  DEEP_OCEAN:0, OCEAN:0.5, COAST:1.0, SHALLOW:1.2, RIVER:1.0, LAKE:1.0,
+  PLAINS:2.2, GRASSLAND:2.5, SAVANNA:2.3,
+  FOREST:3.0, JUNGLE:3.2,
+  SWAMP:1.8, TUNDRA:2.8, SNOW:3.5,
+  HILLS:4.5, DESERT:3.0,
+  MOUNTAINS:7.5, SNOW_PEAK:9.5,
+  VOLCANIC:6.5, LAVA:5.5,
+  RUINS:2.5, CASTLE:2.8
 };
 
-// Context menu tab data
-var TERRAIN_ITEMS=[
-  {id:'PLAINS',icon:'🌾'},{id:'GRASSLAND',icon:'🌿'},{id:'FOREST',icon:'🌲'},
-  {id:'JUNGLE',icon:'🌴'},{id:'HILLS',icon:'⛰'},{id:'MOUNTAINS',icon:'🏔'},
-  {id:'SNOW_PEAK',icon:'🗻'},{id:'DESERT',icon:'🏜'},{id:'SAVANNA',icon:'🌵'},
-  {id:'TUNDRA',icon:'❄'},{id:'SNOW',icon:'🌨'},{id:'SWAMP',icon:'🐸'},
-  {id:'VOLCANIC',icon:'🌋'},{id:'LAVA',icon:'🔥'},
-  {id:'COAST',icon:'🏖'},{id:'SHALLOW',icon:'💧'},{id:'OCEAN',icon:'🌊'},
-  {id:'DEEP_OCEAN',icon:'🌀'},{id:'RIVER',icon:'〰'},{id:'LAKE',icon:'🏞'},
-];
-var FEATURE_ITEMS=[
-  {id:'_RUINS',icon:'🏚',label:'Add Ruins',action:'addRuins'},
-  {id:'_CASTLE',icon:'🏰',label:'Add Castle',action:'addCastle'},
-  {id:'_CLR',icon:'🗑',label:'Clear Feature',action:'clearFeature'},
-];
-var SETTLE_ITEMS=[
-  {id:'_TOWN',icon:'🏘',label:'Place Town',action:'addTown'},
-  {id:'_CITY',icon:'🏙',label:'Place City',action:'addCity'},
-  {id:'_CLRS',icon:'❌',label:'Remove Settlement',action:'clearSettle'},
-];
+// How tall the extruded side walls are (pixels per elevation unit)
+var ELEV_SCALE = 5.5;
 
-// ── Pixel renderer ────────────────────────────────────────────────────────────
-function buildHexLookup(COLS,ROWS,R,W,H){
-  var map=new Int16Array(W*H).fill(-1);
-  for(var row=0;row<ROWS;row++)for(var col=0;col<COLS;col++){
-    var c=hexCtr(col,row,R),cx=c.x,cy=c.y;
-    var verts=hexVerts(cx,cy,R);
-    var x0=Math.max(0,Math.floor(cx-R)),x1=Math.min(W-1,Math.ceil(cx+R));
-    var y0=Math.max(0,Math.floor(cy-R*SQ3/2)),y1=Math.min(H-1,Math.ceil(cy+R*SQ3/2));
-    var idx=row*COLS+col;
-    for(var py=y0;py<=y1;py++)for(var px=x0;px<=x1;px++)if(ptInHex(px,py,verts))map[py*W+px]=idx;
+// Flat-top hex center in ISO space
+// col,row -> screen x,y accounting for hex grid offset and iso projection
+function hexCtr(col, row, R) {
+  // flat-hex grid positions
+  var gx = R * 1.5 * col + R;
+  var gy = R * SQ3 * (row + (col % 2 ? 0.5 : 0)) + R * SQ3 / 2;
+  return { x: gx, y: gy };
+}
+
+// Project a world point (wx,wy) + elevation z into isometric screen coords
+// The iso transform tilts the y axis: screen_y = gy * ISO_SIN, x unchanged
+// Then elevation lifts the tile up (decreases screen_y)
+function isoProject(wx, wy, elev, R) {
+  var tiltY = wy * 0.55; // how much to compress Y (isometric squish)
+  var sx = wx;
+  var sy = tiltY - elev * ELEV_SCALE;
+  return { x: sx, y: sy };
+}
+
+// Get the 6 ISO-projected top-face vertices of a hex tile
+function isoHexTopVerts(col, row, R, elev) {
+  var c = hexCtr(col, row, R);
+  var verts = [];
+  for (var i = 0; i < 6; i++) {
+    var a = Math.PI / 3 * i;
+    var wx = c.x + R * Math.cos(a);
+    var wy = c.y + R * Math.sin(a);
+    var p = isoProject(wx, wy, elev, R);
+    verts.push([p.x, p.y]);
+  }
+  return verts;
+}
+
+// Get a flat hex's verts without ISO (for lookup map)
+function hexVerts(cx, cy, R) {
+  var v = [];
+  for (var i = 0; i < 6; i++) { var a = Math.PI / 3 * i; v.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]); }
+  return v;
+}
+
+function ptInHex(px, py, verts) {
+  for (var i = 0; i < 6; i++) { var a = verts[i], b = verts[(i+1)%6]; if ((px-a[0])*(a[1]-b[1])+(py-a[1])*(b[0]-a[0]) < 0) return false; }
+  return true;
+}
+
+// Build hex lookup from FLAT coords (used for mouse picking - we pick on the flat map)
+function buildHexLookup(COLS, ROWS, R, W, H) {
+  // We build the lookup on a virtual flat-projected canvas
+  // Use the iso-projected bounding box to determine actual canvas size
+  var map = new Int32Array(W * H).fill(-1);
+  for (var row = 0; row < ROWS; row++) for (var col = 0; col < COLS; col++) {
+    var c = hexCtr(col, row, R);
+    var verts = hexVerts(c.x, c.y, R);
+    var x0 = Math.max(0, Math.floor(c.x - R)), x1 = Math.min(W-1, Math.ceil(c.x + R));
+    var y0 = Math.max(0, Math.floor(c.y - R*SQ3/2)), y1 = Math.min(H-1, Math.ceil(c.y + R*SQ3/2));
+    var idx = row * COLS + col;
+    for (var py = y0; py <= y1; py++) for (var px = x0; px <= x1; px++)
+      if (ptInHex(px, py, verts)) map[py * W + px] = idx;
   }
   return map;
 }
 
-function hexEdgeDist(hx,hy,R){
-  var pts=[[1,0],[.5,SQ3/2],[-.5,SQ3/2],[-1,0],[-.5,-SQ3/2],[.5,-SQ3/2]];
-  var minD=Infinity;
-  for(var i=0;i<6;i++){
+function hexEdgeDist(hx, hy, R) {
+  var pts = [[1,0],[.5,SQ3/2],[-.5,SQ3/2],[-1,0],[-.5,-SQ3/2],[.5,-SQ3/2]], minD = Infinity;
+  for (var i = 0; i < 6; i++) {
     var ax=pts[i][0],ay=pts[i][1],bx=pts[(i+1)%6][0],by=pts[(i+1)%6][1];
     var dx=bx-ax,dy=by-ay,len2=dx*dx+dy*dy;
     var t=clamp(((hx-ax)*dx+(hy-ay)*dy)/len2,0,1);
@@ -419,167 +411,341 @@ function hexEdgeDist(hx,hy,R){
   return minD;
 }
 
-function renderPixels(imgData,W,H,hexMap,grid,COLS,ROWS,R,n1fn,n2fn){
-  var data=imgData.data;
-  var ns=0.055,LX=-0.6,LY=-0.8;
-  for(var py=0;py<H;py++){
-    for(var px=0;px<W;px++){
-      var idx=hexMap[py*W+px];
-      if(idx<0){var i0=(py*W+px)*4;data[i0]=6;data[i0+1]=12;data[i0+2]=24;data[i0+3]=255;continue;}
-      var col=idx%COLS,row=~~(idx/COLS);
-      var tile=grid[row][col];if(!tile)continue;
-      var def=T[tile.id]||T.GRASSLAND;
-      var c=hexCtr(col,row,R),cx=c.x,cy=c.y;
-      var hx=(px-cx)/R,hy=(py-cy)/R;
-      var n=n1fn(px*ns,py*ns),m=n2fn(px*ns*2.3+17.3,py*ns*2.3+5.1);
-      var rgb=def.px(px,py,n,m,hx,hy);
-      var r=rgb[0],g=rgb[1],b=rgb[2];
-      var shade=clamp((hx*LX+hy*LY)*.5+.5,.3,1);
-      var light=.74+shade*.26;
-      r=clamp(~~(r*light),0,255);g=clamp(~~(g*light),0,255);b=clamp(~~(b*light),0,255);
-      // Edge blending
-      var ed=hexEdgeDist(hx,hy,R);
-      if(ed<4){
-        var bt=clamp(1-ed/4,0,1)*.32;
-        var nx2=clamp(~~(px+(hx>0?3:-3)),0,W-1),ny2=clamp(~~(py+(hy>0?3:-3)),0,H-1);
-        var nidx=hexMap[ny2*W+nx2];
-        if(nidx>=0&&nidx!==idx){
-          var nc2=nidx%COLS,nr2=~~(nidx/COLS);
-          var nt=grid[nr2][nc2];
-          if(nt){
-            var nd=T[nt.id]||T.GRASSLAND;
-            var nc=hexCtr(nc2,nr2,R),nhx=(px-nc.x)/R,nhy=(py-nc.y)/R;
-            var nrgb=nd.px(px,py,n,m,nhx,nhy);
-            var nr3=nrgb[0],ng2=nrgb[1],nb2=nrgb[2];
-            var nsh=clamp((nhx*LX+nhy*LY)*.5+.5,.3,1),nl=.74+nsh*.26;
-            nr3=clamp(~~(nr3*nl),0,255);ng2=clamp(~~(ng2*nl),0,255);nb2=clamp(~~(nb2*nl),0,255);
-            r=~~lerp(r,nr3,bt);g=~~lerp(g,ng2,bt);b=~~lerp(b,nb2,bt);
+// ── ISO 3D Renderer ───────────────────────────────────────────────────────────
+// Two-pass rendering:
+//   Pass 1 (renderPixels): per-pixel top-face textures using imgData
+//   Pass 2 (drawIsoSideWalls): vector canvas paths for extruded side walls
+
+function getElev(id) {
+  return (ELEV[id] !== undefined ? ELEV[id] : 2.5);
+}
+
+// ── Pass 1: Top-face pixel textures ─────────────────────────────────────────
+// For each pixel, unproject from iso-squished screen space back to flat hex space,
+// find which hex it belongs to, and sample that hex's texture.
+function renderPixels(imgData, W, H, hexMap, grid, COLS, ROWS, R, n1fn, n2fn) {
+  var data = imgData.data;
+  var ns = 0.055, LX = -0.55, LY = -0.75;
+  // Fill void
+  for (var i=0;i<W*H*4;i+=4){data[i]=4;data[i+1]=8;data[i+2]=18;data[i+3]=255;}
+
+  // Pre-compute per-hex elevation
+  var elevMap = new Float32Array(COLS*ROWS);
+  for (var row=0;row<ROWS;row++) for (var col=0;col<COLS;col++){
+    var t=grid[row][col]; elevMap[row*COLS+col]=t?getElev(t.id):0;
+  }
+
+  for (var py=0; py<H; py++) {
+    for (var px=0; px<W; px++) {
+      // Invert the iso Y squish: flat_y = screen_y / 0.55
+      // But each hex has an elev offset — we find the hex by the flat lookup (elev=0 base)
+      var flatY = py / 0.55;
+      var flatX = px;
+
+      // Hex lookup on flat coords
+      var pi2=~~flatX, pj2=~~flatY;
+      if (pi2<0||pi2>=W||pj2<0||pj2>=hexMap.length/W) continue;
+      var luIdx = hexMap[pj2*W+pi2];
+      if (luIdx<0) continue;
+
+      var col2=luIdx%COLS, row2=~~(luIdx/COLS);
+      var tile=grid[row2][col2]; if(!tile) continue;
+      var elev2=elevMap[row2*COLS+col2];
+
+      // The top face of this tile in screen space has y = flat_y*0.55 - elev*ELEV_SCALE
+      // So for a pixel at screen py, the "effective" flat y on this tile's surface is:
+      // py = (flatY_surface)*0.55 - elev*ELEV_SCALE
+      // flatY_surface = (py + elev*ELEV_SCALE) / 0.55
+      var surfFlatY = (py + elev2 * ELEV_SCALE) / 0.55;
+
+      // If surfFlatY is way out of range for this hex, this pixel is actually
+      // a side wall (skip here, drawn by Pass 2)
+      var c2 = hexCtr(col2, row2, R);
+      var flatHy = (surfFlatY - c2.y) / R;
+      if (flatHy > 1.2) continue; // below tile base = side wall territory
+
+      var flatHx = (flatX - c2.x) / R;
+      var def2 = T[tile.id] || T.GRASSLAND;
+      var n2 = n1fn(px*ns, py*ns), m2 = n2fn(px*ns*2.3+17.3, py*ns*2.3+5.1);
+      var rgb2 = def2.px(px, py, n2, m2, flatHx, flatHy);
+      var r2=rgb2[0],g2=rgb2[1],b2=rgb2[2];
+
+      // Isometric directional lighting
+      var shade2 = clamp((flatHx*LX + flatHy*LY)*0.5+0.5, 0.28, 1.0);
+      var elevBoost = clamp(elev2/10, 0, 0.22);
+      var light2 = 0.70 + shade2*0.30 + elevBoost;
+      r2=clamp(~~(r2*light2),0,255); g2=clamp(~~(g2*light2),0,255); b2=clamp(~~(b2*light2),0,255);
+
+      // Edge softening
+      var ed2 = hexEdgeDist(flatHx, flatHy, R);
+      if (ed2 < 3.5) {
+        var bt2 = clamp(1-ed2/3.5,0,1)*0.26;
+        var nx3=clamp(~~(px+(flatHx>0?3:-3)),0,W-1), ny3=clamp(~~(py+(flatHy>0?3:-3)),0,H-1);
+        var nidx3 = hexMap[ny3*W+nx3];
+        if (nidx3>=0 && nidx3!==luIdx) {
+          var nc3=nidx3%COLS, nr3=~~(nidx3/COLS);
+          var nt3=grid[nr3][nc3];
+          if (nt3) {
+            var nd3=T[nt3.id]||T.GRASSLAND;
+            var nc3c=hexCtr(nc3,nr3,R);
+            var nhx3=(flatX-nc3c.x)/R, nhy3=(flatY-nc3c.y)/R;
+            var nrgb3=nd3.px(px,py,n2,m2,nhx3,nhy3);
+            r2=~~lerp(r2,nrgb3[0],bt2); g2=~~lerp(g2,nrgb3[1],bt2); b2=~~lerp(b2,nrgb3[2],bt2);
           }
         }
       }
-      var i=(py*W+px)*4;data[i]=r;data[i+1]=g;data[i+2]=b;data[i+3]=255;
+
+      var i3=(py*W+px)*4; data[i3]=r2;data[i3+1]=g2;data[i3+2]=b2;data[i3+3]=255;
     }
   }
 }
 
-// ── Decals ────────────────────────────────────────────────────────────────────
-function drawAllDecals(ctx2,grid,COLS,ROWS,R,settlements){
-  for(var row=0;row<ROWS;row++){
-    for(var col=0;col<COLS;col++){
-      var tile=grid[row][col];if(!tile)continue;
-      var c=hexCtr(col,row,R),cx=c.x,cy=c.y,id=tile.id;
-      ctx2.save();
-      var v=hexVerts(cx,cy,R+1.5);
-      ctx2.beginPath();ctx2.moveTo(v[0][0],v[0][1]);for(var k=1;k<6;k++)ctx2.lineTo(v[k][0],v[k][1]);ctx2.closePath();ctx2.clip();
-      if(id==='FOREST'||id==='JUNGLE')drawTrees(ctx2,cx,cy,R,id==='JUNGLE');
-      else if(id==='MOUNTAINS'||id==='SNOW_PEAK')drawMtns(ctx2,cx,cy,R,id==='SNOW_PEAK');
-      else if(id==='HILLS')drawHills(ctx2,cx,cy,R);
-      else if(id==='SWAMP')drawSwamp(ctx2,cx,cy,R);
-      else if(id==='RUINS')drawRuins(ctx2,cx,cy,R,tile.label);
-      else if(id==='CASTLE')drawCastle(ctx2,cx,cy,R,tile.label);
-      ctx2.restore();
-    }
-  }
-  // Hex borders
-  ctx2.strokeStyle='rgba(240,235,215,0.14)';ctx2.lineWidth=0.85;
-  for(var row=0;row<ROWS;row++){
-    for(var col=0;col<COLS;col++){
-      var c=hexCtr(col,row,R),v=hexVerts(c.x,c.y,R-.4);
-      ctx2.beginPath();ctx2.moveTo(v[0][0],v[0][1]);for(var k=1;k<6;k++)ctx2.lineTo(v[k][0],v[k][1]);ctx2.closePath();ctx2.stroke();
-    }
-  }
-  // Roads
-  ctx2.setLineDash([5,4]);ctx2.strokeStyle='rgba(185,155,70,.4)';ctx2.lineWidth=2;
+// ── Pass 2: Vector side walls ────────────────────────────────────────────────
+// Draw extruded hex walls as canvas vector paths — fast, beautiful, sorted back-to-front
+function drawIsoSideWalls(ctx2, grid, COLS, ROWS, R) {
+  // Sort back-to-front (painter's algorithm): larger row+col renders last (closest)
+  var order=[];
+  for(var row=0;row<ROWS;row++) for(var col=0;col<COLS;col++) order.push([col,row]);
+  order.sort(function(a,b){
+    var sa=a[1]*1000+a[0], sb=b[1]*1000+b[0]; return sa-sb;
+  });
+
+  order.forEach(function(cr){
+    var col=cr[0],row=cr[1];
+    var tile=grid[row][col]; if(!tile) return;
+    var elev=getElev(tile.id);
+    if(elev<1.3) return; // water — no walls
+
+    var topV=isoHexTopVerts(col,row,R,elev);
+    var botV=isoHexTopVerts(col,row,R,0);
+
+    var def=T[tile.id]||T.GRASSLAND;
+    var n=0.5,m=0.5; // neutral color for walls
+    var c=hexCtr(col,row,R);
+    var baseRgb=def.px(c.x,c.y,n,m,0,0);
+    var br=baseRgb[0],bg=baseRgb[1],bb=baseRgb[2];
+
+    // Draw 3 visible sides: right (edge 0-1), bot-right (1-2), bot-left (2-3)
+    var sides=[
+      {e0:0,e1:1,f:0.50}, // right face — medium
+      {e0:1,e2:2,f:0.40}, // bot-right — darker
+      {e0:2,e3:3,f:0.32}, // bot-left — darkest
+    ];
+    // Actually use correct hex edge indices for a flat-top hex in iso view
+    // Visible bottom edges are 2,3,4 (bottom half of hex)
+    var visibleSides=[
+      {e0:1,e1:2,f:0.52}, // right
+      {e0:2,e1:3,f:0.40}, // bot-right
+      {e0:3,e1:4,f:0.30}, // bot-left
+    ];
+
+    visibleSides.forEach(function(s){
+      var t0=topV[s.e0],t1=topV[s.e1];
+      var b0=botV[s.e0],b1=botV[s.e1];
+      var f=s.f;
+      var wr=clamp(~~(br*f),0,255),wg=clamp(~~(bg*f),0,255),wb=clamp(~~(bb*f),0,255);
+      // Gradient from slightly lighter at top to darker at bottom
+      var grad=ctx2.createLinearGradient(t0[0],t0[1],b0[0],b0[1]);
+      var topF=Math.min(1,f*1.35);
+      grad.addColorStop(0,'rgba('+clamp(~~(br*topF),0,255)+','+clamp(~~(bg*topF),0,255)+','+clamp(~~(bb*topF),0,255)+',.97)');
+      grad.addColorStop(1,'rgba('+wr+','+wg+','+wb+',.97)');
+      ctx2.fillStyle=grad;
+      ctx2.beginPath();
+      ctx2.moveTo(t0[0],t0[1]);
+      ctx2.lineTo(t1[0],t1[1]);
+      ctx2.lineTo(b1[0],b1[1]);
+      ctx2.lineTo(b0[0],b0[1]);
+      ctx2.closePath();
+      ctx2.fill();
+      // Subtle edge highlight at wall top
+      ctx2.strokeStyle='rgba(255,255,255,0.10)';
+      ctx2.lineWidth=0.8;
+      ctx2.beginPath();ctx2.moveTo(t0[0],t0[1]);ctx2.lineTo(t1[0],t1[1]);ctx2.stroke();
+    });
+  });
+}
+
+// Point-in-quad test (convex quad a,b,c,d in CCW order)
+function ptInQuad(px,py,a,b,c,d){
+  function side(p1,p2){return (px-p1[0])*(p2[1]-p1[1])-(py-p1[1])*(p2[0]-p1[0]);}
+  var s1=side(a,b),s2=side(b,c),s3=side(c,d),s4=side(d,a);
+  return (s1>=0&&s2>=0&&s3>=0&&s4>=0)||(s1<=0&&s2<=0&&s3<=0&&s4<=0);
+}
+
+// Get normalized V position (0=top, 1=bottom) within quad
+function getQuadV(px,py,t0,t1,b0,b1){
+  var topY=(t0[1]+t1[1])/2, botY=(b0[1]+b1[1])/2;
+  if(botY===topY)return 0;
+  return clamp((py-topY)/(botY-topY),0,1);
+}
+
+// ── ISO-aware Canvas size calculator ─────────────────────────────────────────
+// The iso projection squishes Y by 0.55, so canvas height = grid_height * 0.55 + elev headroom
+function isoCanvasSize(COLS, ROWS, R) {
+  var flatW = Math.ceil(R*1.5*COLS + R*2.5);
+  var flatH = Math.ceil(R*SQ3*ROWS + R*SQ3);
+  var isoH = Math.ceil(flatH * 0.55 + 10 * ELEV_SCALE + R*2); // headroom for tallest tiles
+  return { W: flatW, H: isoH, flatH: flatH };
+}
+
+// ── ISO Decals ────────────────────────────────────────────────────────────────
+// All decals are drawn on the iso-projected top face center, lifted by elevation
+
+function getIsoCenter(col, row, R) {
+  var c = hexCtr(col, row, R);
+  var elev = 0; // will be passed in
+  var p = isoProject(c.x, c.y, elev, R);
+  return p;
+}
+
+function drawAllDecals(ctx2, grid, COLS, ROWS, R, settlements) {
+  // Sort back-to-front: higher row first, then col
+  var order = [];
+  for (var row=0;row<ROWS;row++) for (var col=0;col<COLS;col++) order.push([col,row]);
+  order.sort(function(a,b){ return (a[1]+a[0]*.001)-(b[1]+b[0]*.001); });
+
+  order.forEach(function(cr){
+    var col=cr[0],row=cr[1];
+    var tile=grid[row][col]; if(!tile)return;
+    var elev=getElev(tile.id);
+    var c=hexCtr(col,row,R);
+    // iso top-center of this tile
+    var isoC=isoProject(c.x,c.y,elev,R);
+    var cx=isoC.x, cy=isoC.y;
+    var id=tile.id;
+
+    ctx2.save();
+    // Clip to the ISO top-face polygon
+    var topV=isoHexTopVerts(col,row,R,elev);
+    ctx2.beginPath();ctx2.moveTo(topV[0][0],topV[0][1]);
+    for(var k=1;k<6;k++)ctx2.lineTo(topV[k][0],topV[k][1]);
+    ctx2.closePath();ctx2.clip();
+
+    if(id==='FOREST'||id==='JUNGLE')drawTrees(ctx2,cx,cy,R,id==='JUNGLE',elev);
+    else if(id==='MOUNTAINS'||id==='SNOW_PEAK')drawMtns(ctx2,cx,cy,R,id==='SNOW_PEAK',elev);
+    else if(id==='HILLS')drawHills(ctx2,cx,cy,R,elev);
+    else if(id==='SWAMP')drawSwamp(ctx2,cx,cy,R,elev);
+    else if(id==='RUINS')drawRuins(ctx2,cx,cy,R,tile.label,elev);
+    else if(id==='CASTLE')drawCastle(ctx2,cx,cy,R,tile.label,elev);
+    ctx2.restore();
+  });
+
+  // Draw iso hex borders (top-face outline only)
+  ctx2.strokeStyle='rgba(240,235,215,0.12)';ctx2.lineWidth=0.7;
+  order.forEach(function(cr){
+    var col=cr[0],row=cr[1];
+    var tile=grid[row][col];if(!tile)return;
+    var elev=getElev(tile.id);
+    var topV=isoHexTopVerts(col,row,R,elev);
+    ctx2.beginPath();ctx2.moveTo(topV[0][0],topV[0][1]);
+    for(var k=1;k<6;k++)ctx2.lineTo(topV[k][0],topV[k][1]);
+    ctx2.closePath();ctx2.stroke();
+  });
+
+  // Roads - draw on iso surface
+  ctx2.setLineDash([5,4]);ctx2.strokeStyle='rgba(185,155,70,.45)';ctx2.lineWidth=2;
   for(var i=0;i<settlements.length-1;i++){
-    if(settlements[i].road){ctx2.beginPath();ctx2.moveTo(settlements[i].px,settlements[i].py);ctx2.lineTo(settlements[i+1].px,settlements[i+1].py);ctx2.stroke();}
+    if(settlements[i].road){
+      ctx2.beginPath();ctx2.moveTo(settlements[i].isoX||settlements[i].px,settlements[i].isoY||settlements[i].py);
+      ctx2.lineTo(settlements[i+1].isoX||settlements[i+1].px,settlements[i+1].isoY||settlements[i+1].py);
+      ctx2.stroke();
+    }
   }
   ctx2.setLineDash([]);
+
   // Settlements
   settlements.forEach(function(s){
-    var gc=ctx2.createRadialGradient(s.px,s.py,0,s.px,s.py,R*.95);
-    gc.addColorStop(0,s.isCity?'rgba(210,60,60,.4)':'rgba(210,175,55,.35)');gc.addColorStop(1,'rgba(0,0,0,0)');
-    ctx2.fillStyle=gc;ctx2.beginPath();ctx2.arc(s.px,s.py,R*.95,0,Math.PI*2);ctx2.fill();
+    var px2=s.isoX||s.px, py2=s.isoY||s.py;
+    var gc=ctx2.createRadialGradient(px2,py2,0,px2,py2,R*.9);
+    gc.addColorStop(0,s.isCity?'rgba(210,60,60,.45)':'rgba(210,175,55,.4)');gc.addColorStop(1,'rgba(0,0,0,0)');
+    ctx2.fillStyle=gc;ctx2.beginPath();ctx2.arc(px2,py2,R*.9,0,Math.PI*2);ctx2.fill();
     ctx2.strokeStyle=s.isCity?'#c03030':'#c09820';ctx2.lineWidth=s.isCity?2.2:1.8;
     ctx2.fillStyle=s.isCity?'rgba(192,48,48,.22)':'rgba(192,152,32,.2)';
-    ctx2.beginPath();ctx2.arc(s.px,s.py,R*.5,0,Math.PI*2);ctx2.fill();ctx2.stroke();
-    ctx2.fillStyle=s.isCity?'#c03030':'#c09820';ctx2.beginPath();ctx2.arc(s.px,s.py,R*.2,0,Math.PI*2);ctx2.fill();
+    ctx2.beginPath();ctx2.arc(px2,py2,R*.48,0,Math.PI*2);ctx2.fill();ctx2.stroke();
+    ctx2.fillStyle=s.isCity?'#c03030':'#c09820';ctx2.beginPath();ctx2.arc(px2,py2,R*.18,0,Math.PI*2);ctx2.fill();
     ctx2.font=(s.isCity?'600 ':'')+''+(s.isCity?10.5:9)+"px 'Open Sans',sans-serif";
     ctx2.textAlign='center';ctx2.textBaseline='middle';
-    ctx2.fillStyle='rgba(0,0,0,.9)';ctx2.fillText(s.name,s.px+1,s.py-R*.7+1);
-    ctx2.fillStyle=s.isCity?'#ffd0d0':'#fff0a0';ctx2.fillText(s.name,s.px,s.py-R*.7);
+    ctx2.fillStyle='rgba(0,0,0,.9)';ctx2.fillText(s.name,px2+1,py2-R*.65+1);
+    ctx2.fillStyle=s.isCity?'#ffd0d0':'#fff0a0';ctx2.fillText(s.name,px2,py2-R*.65);
     ctx2.textBaseline='alphabetic';
   });
 }
 
-function drawTrees(ctx2,cx,cy,R,jungle){
-  var cfg=jungle?[[0,-.1,.56],[-.3,.1,.46],[.28,.08,.43],[0,.28,.38]]:[[-.18,-.07,.5],[.16,-.11,.46],[0,.15,.43],[-.28,.22,.38],[.26,.2,.35]];
+function drawTrees(ctx2,cx,cy,R,jungle,elev){
+  // Trees on iso surface - squish Y by 0.55, reduce height
+  var ys=0.55;
+  var cfg=jungle?[[0,-.08,.52],[-.26,.09,.43],[.24,.07,.40],[0,.24,.36]]:[[-.16,-.06,.46],[.14,-.10,.43],[0,.14,.40],[-.25,.20,.35],[.23,.18,.32]];
   cfg.forEach(function(p){
-    var tx=cx+p[0]*R*1.75,ty=cy+p[1]*R*1.75,sz=R*p[2];
-    ctx2.fillStyle='rgba(0,0,0,0.3)';ctx2.beginPath();ctx2.ellipse(tx+sz*.14,ty+sz*.16,sz*1.04,sz*.82,0,0,Math.PI*2);ctx2.fill();
+    var tx=cx+p[0]*R*1.6,ty=cy+p[1]*R*1.6*ys,sz=R*p[2];
+    ctx2.fillStyle='rgba(0,0,0,0.3)';ctx2.beginPath();ctx2.ellipse(tx+sz*.12,ty+sz*.14,sz*.95,sz*.72,0,0,Math.PI*2);ctx2.fill();
     if(jungle){
-      ctx2.strokeStyle='#1a6010';ctx2.lineWidth=sz*.14;ctx2.lineCap='round';
-      for(var a=0;a<7;a++){var ang=-Math.PI/2+a*(Math.PI/3.5);ctx2.beginPath();ctx2.moveTo(tx,ty-sz*.38);ctx2.lineTo(tx+Math.cos(ang)*sz*.62,ty-sz*.38+Math.sin(ang)*sz*.56);ctx2.stroke();}
-      ctx2.strokeStyle='#5a3a12';ctx2.lineWidth=sz*.13;ctx2.beginPath();ctx2.moveTo(tx,ty+sz*.5);ctx2.bezierCurveTo(tx+sz*.1,ty,tx-sz*.05,ty-sz*.2,tx,ty-sz*.38);ctx2.stroke();
+      ctx2.strokeStyle='#1a6010';ctx2.lineWidth=sz*.13;ctx2.lineCap='round';
+      for(var a=0;a<7;a++){var ang=-Math.PI/2+a*(Math.PI/3.5);ctx2.beginPath();ctx2.moveTo(tx,ty-sz*.34);ctx2.lineTo(tx+Math.cos(ang)*sz*.58,ty-sz*.34+Math.sin(ang)*sz*.50*ys);ctx2.stroke();}
+      ctx2.strokeStyle='#5a3a12';ctx2.lineWidth=sz*.12;ctx2.beginPath();ctx2.moveTo(tx,ty+sz*.45);ctx2.bezierCurveTo(tx+sz*.09,ty,tx-sz*.05,ty-sz*.18,tx,ty-sz*.34);ctx2.stroke();
     } else {
-      ctx2.fillStyle='rgba(0,0,0,.27)';ctx2.beginPath();ctx2.moveTo(tx+sz*.09,ty+sz*.04);ctx2.lineTo(tx-sz*.64+sz*.09,ty+sz*.7);ctx2.lineTo(tx+sz*.64+sz*.09,ty+sz*.7);ctx2.closePath();ctx2.fill();
-      ctx2.fillStyle='#164410';ctx2.beginPath();ctx2.moveTo(tx,ty-.04*sz);ctx2.lineTo(tx-sz*.62,ty+sz*.68);ctx2.lineTo(tx+sz*.62,ty+sz*.68);ctx2.closePath();ctx2.fill();
-      ctx2.fillStyle='#1e5a14';ctx2.beginPath();ctx2.moveTo(tx,ty-.04*sz);ctx2.lineTo(tx-sz*.44,ty+sz*.4);ctx2.lineTo(tx+sz*.44,ty+sz*.4);ctx2.closePath();ctx2.fill();
-      ctx2.fillStyle='rgba(60,120,30,.45)';ctx2.beginPath();ctx2.moveTo(tx,ty-.04*sz);ctx2.lineTo(tx-sz*.2,ty+sz*.18);ctx2.lineTo(tx+sz*.2,ty+sz*.18);ctx2.closePath();ctx2.fill();
+      ctx2.fillStyle='rgba(0,0,0,.26)';ctx2.beginPath();ctx2.moveTo(tx+sz*.08,ty+sz*.04);ctx2.lineTo(tx-sz*.60+sz*.08,ty+sz*.64*ys);ctx2.lineTo(tx+sz*.60+sz*.08,ty+sz*.64*ys);ctx2.closePath();ctx2.fill();
+      ctx2.fillStyle='#164410';ctx2.beginPath();ctx2.moveTo(tx,ty-.04*sz);ctx2.lineTo(tx-sz*.58,ty+sz*.62*ys);ctx2.lineTo(tx+sz*.58,ty+sz*.62*ys);ctx2.closePath();ctx2.fill();
+      ctx2.fillStyle='#1e5a14';ctx2.beginPath();ctx2.moveTo(tx,ty-.04*sz);ctx2.lineTo(tx-sz*.40,ty+sz*.36*ys);ctx2.lineTo(tx+sz*.40,ty+sz*.36*ys);ctx2.closePath();ctx2.fill();
+      ctx2.fillStyle='rgba(60,120,30,.42)';ctx2.beginPath();ctx2.moveTo(tx,ty-.04*sz);ctx2.lineTo(tx-sz*.18,ty+sz*.16*ys);ctx2.lineTo(tx+sz*.18,ty+sz*.16*ys);ctx2.closePath();ctx2.fill();
     }
   });
 }
 
-function drawMtns(ctx2,cx,cy,R,snow){
-  var pks=snow?[[0,-.06,1],[-.3,.12,.72],[.28,.1,.65]]:[[-.15,-.04,.88],[.18,-.08,.78],[0,.2,.65]];
+function drawMtns(ctx2,cx,cy,R,snow,elev){
+  var ys=0.55;
+  var pks=snow?[[0,-.05,.95],[-.28,.10,.68],[.26,.09,.62]]:[[-.14,-.04,.84],[.17,-.07,.74],[0,.18,.62]];
   pks.sort(function(a,b){return a[1]-b[1];}).forEach(function(p){
-    var px=cx+p[0]*R*1.5,py=cy+p[1]*R*1.5,h=R*.85*p[2],hw=R*.72*p[2];
-    ctx2.fillStyle='rgba(0,0,0,.22)';ctx2.beginPath();ctx2.moveTo(px+hw*.06,py+h*.38);ctx2.lineTo(px+hw,py+h*.38);ctx2.lineTo(px,py-h);ctx2.closePath();ctx2.fill();
-    var g=ctx2.createLinearGradient(px,py-h,px+hw,py+h*.38);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.42)');ctx2.fillStyle=g;ctx2.beginPath();ctx2.moveTo(px,py-h);ctx2.lineTo(px,py+h*.38);ctx2.lineTo(px+hw,py+h*.38);ctx2.closePath();ctx2.fill();
-    g=ctx2.createLinearGradient(px-hw,py+h*.38,px,py-h);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,.2)');ctx2.fillStyle=g;ctx2.beginPath();ctx2.moveTo(px,py-h);ctx2.lineTo(px-hw,py+h*.38);ctx2.lineTo(px,py+h*.38);ctx2.closePath();ctx2.fill();
-    ctx2.strokeStyle='rgba(0,0,0,.44)';ctx2.lineWidth=.9;ctx2.beginPath();ctx2.moveTo(px,py-h);ctx2.lineTo(px-hw,py+h*.38);ctx2.lineTo(px+hw,py+h*.38);ctx2.closePath();ctx2.stroke();
-    if(snow||p[2]>.85){var sH=snow?h*.44:h*.3,sW=snow?hw*.4:hw*.28;ctx2.fillStyle='rgba(222,234,248,.92)';ctx2.beginPath();ctx2.moveTo(px,py-h);ctx2.lineTo(px-sW,py-h+sH);ctx2.lineTo(px+sW*.7,py-h+sH*.8);ctx2.closePath();ctx2.fill();}
+    var px2=cx+p[0]*R*1.4,py2=cy+p[1]*R*1.4*ys,h=R*.78*p[2],hw=R*.66*p[2];
+    ctx2.fillStyle='rgba(0,0,0,.22)';ctx2.beginPath();ctx2.moveTo(px2+hw*.06,py2+h*.36);ctx2.lineTo(px2+hw,py2+h*.36);ctx2.lineTo(px2,py2-h);ctx2.closePath();ctx2.fill();
+    var g=ctx2.createLinearGradient(px2,py2-h,px2+hw,py2+h*.36);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.44)');
+    ctx2.fillStyle=g;ctx2.beginPath();ctx2.moveTo(px2,py2-h);ctx2.lineTo(px2,py2+h*.36);ctx2.lineTo(px2+hw,py2+h*.36);ctx2.closePath();ctx2.fill();
+    g=ctx2.createLinearGradient(px2-hw,py2+h*.36,px2,py2-h);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(255,255,255,.22)');
+    ctx2.fillStyle=g;ctx2.beginPath();ctx2.moveTo(px2,py2-h);ctx2.lineTo(px2-hw,py2+h*.36);ctx2.lineTo(px2,py2+h*.36);ctx2.closePath();ctx2.fill();
+    ctx2.strokeStyle='rgba(0,0,0,.45)';ctx2.lineWidth=.9;ctx2.beginPath();ctx2.moveTo(px2,py2-h);ctx2.lineTo(px2-hw,py2+h*.36);ctx2.lineTo(px2+hw,py2+h*.36);ctx2.closePath();ctx2.stroke();
+    if(snow||p[2]>.82){var sH=snow?h*.42:h*.28,sW=snow?hw*.38:hw*.26;ctx2.fillStyle='rgba(222,234,248,.94)';ctx2.beginPath();ctx2.moveTo(px2,py2-h);ctx2.lineTo(px2-sW,py2-h+sH);ctx2.lineTo(px2+sW*.68,py2-h+sH*.78);ctx2.closePath();ctx2.fill();}
   });
 }
 
-function drawHills(ctx2,cx,cy,R){
-  [[-.2,.1,.88],[.18,.06,.75],[0,.24,.65]].forEach(function(p){
-    var hx=cx+p[0]*R*1.4,hy=cy+p[1]*R*1.4,hw=R*.5*p[2],hh=R*.32*p[2];
-    ctx2.fillStyle='rgba(0,0,0,.22)';ctx2.beginPath();ctx2.ellipse(hx+hw*.12,hy+hh*.12,hw*.68,hh*.56,0,0,Math.PI*2);ctx2.fill();
-    var g=ctx2.createLinearGradient(hx-hw,hy,hx+hw,hy);g.addColorStop(0,'rgba(255,255,255,.18)');g.addColorStop(.45,'rgba(255,255,255,.06)');g.addColorStop(1,'rgba(0,0,0,0)');
-    ctx2.fillStyle=g;ctx2.beginPath();ctx2.ellipse(hx,hy,hw,hh,0,Math.PI,0);ctx2.fill();
-    ctx2.fillStyle='rgba(0,0,0,.2)';ctx2.beginPath();ctx2.ellipse(hx+hw*.22,hy+hh*.08,hw*.5,hh*.6,0,Math.PI,0);ctx2.fill();
-    ctx2.strokeStyle='rgba(0,0,0,.3)';ctx2.lineWidth=.7;ctx2.beginPath();ctx2.ellipse(hx,hy,hw,hh,0,Math.PI,0);ctx2.stroke();
+function drawHills(ctx2,cx,cy,R,elev){
+  var ys=0.55;
+  [[-.18,.09,.84],[.16,.06,.72],[0,.22,.62]].forEach(function(p){
+    var hx2=cx+p[0]*R*1.3,hy2=cy+p[1]*R*1.3*ys,hw=R*.46*p[2],hh=R*.28*p[2];
+    ctx2.fillStyle='rgba(0,0,0,.22)';ctx2.beginPath();ctx2.ellipse(hx2+hw*.11,hy2+hh*.11,hw*.64,hh*.52,0,0,Math.PI*2);ctx2.fill();
+    var g=ctx2.createLinearGradient(hx2-hw,hy2,hx2+hw,hy2);g.addColorStop(0,'rgba(255,255,255,.18)');g.addColorStop(.45,'rgba(255,255,255,.05)');g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx2.fillStyle=g;ctx2.beginPath();ctx2.ellipse(hx2,hy2,hw,hh,0,Math.PI,0);ctx2.fill();
+    ctx2.fillStyle='rgba(0,0,0,.2)';ctx2.beginPath();ctx2.ellipse(hx2+hw*.20,hy2+hh*.07,hw*.46,hh*.55,0,Math.PI,0);ctx2.fill();
+    ctx2.strokeStyle='rgba(0,0,0,.3)';ctx2.lineWidth=.7;ctx2.beginPath();ctx2.ellipse(hx2,hy2,hw,hh,0,Math.PI,0);ctx2.stroke();
   });
 }
 
-function drawSwamp(ctx2,cx,cy,R){
+function drawSwamp(ctx2,cx,cy,R,elev){
+  var ys=0.55;
   ctx2.strokeStyle='#527830';ctx2.lineWidth=R*.07;ctx2.lineCap='round';
-  for(var i=-1;i<=1;i++){ctx2.beginPath();ctx2.moveTo(cx+i*R*.22,cy+R*.32);ctx2.lineTo(cx+i*R*.22+R*.04,cy-R*.18);ctx2.stroke();ctx2.fillStyle='#704e1a';ctx2.beginPath();ctx2.ellipse(cx+i*R*.22+R*.04,cy-R*.21,R*.04,R*.1,0,0,Math.PI*2);ctx2.fill();}
+  for(var i=-1;i<=1;i++){ctx2.beginPath();ctx2.moveTo(cx+i*R*.22,cy+R*.30*ys);ctx2.lineTo(cx+i*R*.22+R*.04,cy-R*.18);ctx2.stroke();ctx2.fillStyle='#704e1a';ctx2.beginPath();ctx2.ellipse(cx+i*R*.22+R*.04,cy-R*.21,R*.04,R*.09*ys,0,0,Math.PI*2);ctx2.fill();}
 }
 
-function drawRuins(ctx2,cx,cy,R,label){
+function drawRuins(ctx2,cx,cy,R,label,elev){
+  var ys=0.55;
   ctx2.fillStyle='rgba(100,80,58,.35)';
-  for(var i=0;i<4;i++)for(var j=0;j<2;j++){if((i+j)%2===0)ctx2.fillRect(cx-R*.46+i*R*.23,cy-R*.12+j*R*.2,R*.21,R*.18);}
-  ctx2.fillStyle='rgba(152,126,90,.7)';ctx2.fillRect(cx-R*.5,cy-R*.44,R*.2,R*.6);ctx2.fillRect(cx-R*.5,cy-R*.57,R*.12,R*.16);ctx2.fillRect(cx+R*.2,cy-R*.34,R*.2,R*.48);ctx2.fillRect(cx+R*.28,cy-R*.46,R*.12,R*.14);
-  ctx2.fillStyle='rgba(105,85,60,.55)';for(var i=0;i<5;i++)ctx2.fillRect(cx-R*.1+i*R*.1,cy+R*.2+(i%2)*R*.04,R*.08,R*.07);
-  if(label){ctx2.font="italic "+(R*.29)+"px 'Open Sans',sans-serif";ctx2.textAlign='center';ctx2.textBaseline='top';ctx2.fillStyle='rgba(0,0,0,.72)';ctx2.fillText(label,cx+1,cy+R*.62+1);ctx2.fillStyle='rgba(195,165,108,.96)';ctx2.fillText(label,cx,cy+R*.62);ctx2.textBaseline='alphabetic';}
+  for(var i=0;i<4;i++)for(var j=0;j<2;j++){if((i+j)%2===0)ctx2.fillRect(cx-R*.44+i*R*.22,cy-R*.10*ys+j*R*.18*ys,R*.20,R*.16*ys);}
+  ctx2.fillStyle='rgba(152,126,90,.7)';ctx2.fillRect(cx-R*.48,cy-R*.40,R*.19,R*.55*ys);ctx2.fillRect(cx-R*.48,cy-R*.52,R*.11,R*.14);ctx2.fillRect(cx+R*.19,cy-R*.30,R*.19,R*.44*ys);ctx2.fillRect(cx+R*.27,cy-R*.42,R*.11,R*.13);
+  if(label){ctx2.font="italic "+(R*.27)+"px 'Open Sans',sans-serif";ctx2.textAlign='center';ctx2.textBaseline='top';ctx2.fillStyle='rgba(0,0,0,.72)';ctx2.fillText(label,cx+1,cy+R*.54*ys+1);ctx2.fillStyle='rgba(195,165,108,.96)';ctx2.fillText(label,cx,cy+R*.54*ys);ctx2.textBaseline='alphabetic';}
 }
 
-function drawCastle(ctx2,cx,cy,R,label){
-  ctx2.fillStyle='rgba(0,0,0,.26)';ctx2.beginPath();ctx2.ellipse(cx,cy+R*.46,R*.52,R*.11,0,0,Math.PI*2);ctx2.fill();
-  ctx2.fillStyle='rgba(165,156,138,.7)';ctx2.fillRect(cx-R*.5,cy-R*.4,R*.22,R*.6);ctx2.fillRect(cx+R*.28,cy-R*.4,R*.22,R*.6);
-  [[cx-R*.5,cy-R*.52],[cx-R*.38,cy-R*.52],[cx+R*.28,cy-R*.52],[cx+R*.4,cy-R*.52]].forEach(function(b){ctx2.fillRect(b[0],b[1],R*.1,R*.13);});
-  ctx2.fillStyle='rgba(178,168,150,.72)';ctx2.fillRect(cx-R*.3,cy-R*.52,R*.6,R*.72);
-  for(var i=0;i<3;i++)ctx2.fillRect(cx-R*.28+i*R*.22,cy-R*.64,R*.14,R*.14);
-  ctx2.fillStyle='rgba(255,255,255,.07)';ctx2.fillRect(cx-R*.3,cy-R*.52,R*.07,R*.72);
-  ctx2.fillStyle='rgba(0,0,0,.65)';ctx2.beginPath();ctx2.arc(cx,cy+R*.04,R*.14,Math.PI,0);ctx2.rect(cx-R*.14,cy+R*.04,R*.28,R*.18);ctx2.fill();
-  ctx2.fillStyle='rgba(0,0,0,.65)';ctx2.fillRect(cx-R*.18,cy-R*.3,R*.08,R*.12);ctx2.fillRect(cx+R*.1,cy-R*.3,R*.08,R*.12);
-  ctx2.strokeStyle='rgba(65,46,26,.86)';ctx2.lineWidth=R*.045;ctx2.beginPath();ctx2.moveTo(cx,cy-R*.52);ctx2.lineTo(cx,cy-R*.88);ctx2.stroke();
-  ctx2.fillStyle='rgba(190,36,36,.92)';ctx2.beginPath();ctx2.moveTo(cx,cy-R*.88);ctx2.lineTo(cx+R*.26,cy-R*.74);ctx2.lineTo(cx,cy-R*.62);ctx2.closePath();ctx2.fill();
-  if(label){ctx2.font="bold "+(R*.29)+"px 'Open Sans',sans-serif";ctx2.textAlign='center';ctx2.textBaseline='top';ctx2.fillStyle='rgba(0,0,0,.7)';ctx2.fillText(label,cx+1,cy+R*.66+1);ctx2.fillStyle='rgba(230,210,158,.98)';ctx2.fillText(label,cx,cy+R*.66);ctx2.textBaseline='alphabetic';}
+function drawCastle(ctx2,cx,cy,R,label,elev){
+  var ys=0.55;
+  ctx2.fillStyle='rgba(0,0,0,.26)';ctx2.beginPath();ctx2.ellipse(cx,cy+R*.42*ys,R*.48,R*.10*ys,0,0,Math.PI*2);ctx2.fill();
+  ctx2.fillStyle='rgba(165,156,138,.7)';ctx2.fillRect(cx-R*.48,cy-R*.36*ys,R*.21,R*.54*ys);ctx2.fillRect(cx+R*.27,cy-R*.36*ys,R*.21,R*.54*ys);
+  [[cx-R*.48,cy-R*.48],[cx-R*.36,cy-R*.48],[cx+R*.27,cy-R*.48],[cx+R*.39,cy-R*.48]].forEach(function(b){ctx2.fillRect(b[0],b[1],R*.10,R*.13);});
+  ctx2.fillStyle='rgba(178,168,150,.72)';ctx2.fillRect(cx-R*.28,cy-R*.48,R*.56,R*.66*ys);
+  for(var i=0;i<3;i++)ctx2.fillRect(cx-R*.26+i*R*.21,cy-R*.60,R*.13,R*.13);
+  ctx2.fillStyle='rgba(0,0,0,.65)';ctx2.beginPath();ctx2.arc(cx,cy+R*.02*ys,R*.13,Math.PI,0);ctx2.rect(cx-R*.13,cy+R*.02*ys,R*.26,R*.16*ys);ctx2.fill();
+  ctx2.strokeStyle='rgba(65,46,26,.86)';ctx2.lineWidth=R*.04;ctx2.beginPath();ctx2.moveTo(cx,cy-R*.48);ctx2.lineTo(cx,cy-R*.82);ctx2.stroke();
+  ctx2.fillStyle='rgba(190,36,36,.92)';ctx2.beginPath();ctx2.moveTo(cx,cy-R*.82);ctx2.lineTo(cx+R*.24,cy-R*.68);ctx2.lineTo(cx,cy-R*.56);ctx2.closePath();ctx2.fill();
+  if(label){ctx2.font="bold "+(R*.27)+"px 'Open Sans',sans-serif";ctx2.textAlign='center';ctx2.textBaseline='top';ctx2.fillStyle='rgba(0,0,0,.7)';ctx2.fillText(label,cx+1,cy+R*.60*ys+1);ctx2.fillStyle='rgba(230,210,158,.98)';ctx2.fillText(label,cx,cy+R*.60*ys);ctx2.textBaseline='alphabetic';}
 }
 
-// ── Water animation ───────────────────────────────────────────────────────────
+// ── ISO Water Animation ────────────────────────────────────────────────────────
 var animRaf=null,animT=0;
 function startWater(grid,COLS,ROWS,R,ac){
   if(animRaf)cancelAnimationFrame(animRaf);
@@ -589,15 +755,17 @@ function startWater(grid,COLS,ROWS,R,ac){
     actx.clearRect(0,0,ac.width,ac.height);
     for(var row=0;row<ROWS;row++)for(var col=0;col<COLS;col++){
       var tile=grid[row][col];if(!tile||!T[tile.id]||!T[tile.id].water)continue;
-      var c=hexCtr(col,row,R),cx=c.x,cy=c.y;
+      var elev=getElev(tile.id);
+      var c=hexCtr(col,row,R);
+      var ic=isoProject(c.x,c.y,elev,R);
       var phase=(col*.4+row*.3+animT)%(Math.PI*2);
       for(var w=0;w<2;w++){
-        var yoff=(w-.5)*R*.32;
+        var yoff=(w-.5)*R*.28*.55;
         var alpha=(.04+Math.sin(phase+w*1.4)*.04)*Math.min(1,zoom);
         actx.strokeStyle='rgba(180,230,255,'+alpha+')';
-        actx.lineWidth=R*.1;actx.lineCap='round';
-        actx.beginPath();actx.moveTo(cx-R*.55,cy+yoff);
-        actx.bezierCurveTo(cx-R*.18,cy+yoff-R*.08,cx+R*.18,cy+yoff+R*.08,cx+R*.55,cy+yoff);
+        actx.lineWidth=R*.09;actx.lineCap='round';
+        actx.beginPath();actx.moveTo(ic.x-R*.50,ic.y+yoff);
+        actx.bezierCurveTo(ic.x-R*.16,ic.y+yoff-R*.07*.55,ic.x+R*.16,ic.y+yoff+R*.07*.55,ic.x+R*.50,ic.y+yoff);
         actx.stroke();
       }
     }
@@ -605,6 +773,8 @@ function startWater(grid,COLS,ROWS,R,ac){
   }
   animRaf=requestAnimationFrame(frame);
 }
+
+
 
 // ── App state ──────────────────────────────────────────────────────────────────
 var canvas=document.getElementById('mc');
@@ -821,8 +991,10 @@ function doCtxAction(action,id){
     var isCity=action==='addCity';
     var nm=TOWNS[~~(rng2()*TOWNS.length)];
     var hc=hexCtr(ctxPos.col,ctxPos.row,HexR);
+    var tselev=getElev(grid[ctxPos.row][ctxPos.col].id);
+    var tsIso=isoProject(hc.x,hc.y,tselev,HexR);
     settlements=settlements.filter(function(s){return!(s.col===ctxPos.col&&s.row===ctxPos.row);});
-    settlements.push({col:ctxPos.col,row:ctxPos.row,px:hc.x,py:hc.y,name:nm,isCity:isCity,road:false});
+    settlements.push({col:ctxPos.col,row:ctxPos.row,px:hc.x,py:hc.y,isoX:tsIso.x,isoY:tsIso.y,name:nm,isCity:isCity,road:false});
     rerenderDecals();refreshList();
   } else if(action==='clearSettle'){
     settlements=settlements.filter(function(s){return!(s.col===ctxPos.col&&s.row===ctxPos.row);});
@@ -873,9 +1045,12 @@ function rerenderAll(){
   if(!grid.length||!noiseH)return;
   var W=canvas.width,H=canvas.height;
   ctx.fillStyle='#040810';ctx.fillRect(0,0,W,H);
+  // Pass 1: pixel-level top-face textures
   var imgData=ctx.createImageData(W,H);
   renderPixels(imgData,W,H,hexLookup,grid,COLS,ROWS,HexR,noiseH,noiseD);
   ctx.putImageData(imgData,0,0);
+  // Pass 2: vector side walls drawn on top (fast canvas paths)
+  drawIsoSideWalls(ctx,grid,COLS,ROWS,HexR);
   baseImg=ctx.getImageData(0,0,W,H);
   drawAllDecals(ctx,grid,COLS,ROWS,HexR,settlements);
 }
@@ -904,8 +1079,8 @@ function generate(){
   undoStack=[];document.getElementById('undoBtn').disabled=true;
 
   var sz=SIZES[sizeKey];COLS=sz.cols;ROWS=sz.rows;HexR=26;
-  var W=Math.ceil(HexR*1.5*COLS+HexR*2.5);
-  var H=Math.ceil(HexR*SQ3*ROWS+HexR*SQ3);
+  var isoSz=isoCanvasSize(COLS,ROWS,HexR);
+  var W=isoSz.W,H=isoSz.H;
   canvas.width=W;canvas.height=H;ac.width=W;ac.height=H;
 
   var mapName=PRE[~~(rng()*PRE.length)]+SUF[~~(rng()*SUF.length)];
@@ -1057,7 +1232,9 @@ function generate(){
       var snm;do{snm=TOWNS[~~(rng2()*TOWNS.length)];}while(usedN.has(snm));
       usedN.add(snm);
       var hctr=hexCtr(sc,sr,HexR);
-      settlements.push({col:sc,row:sr,px:hctr.x,py:hctr.y,name:snm,isCity:rng2()>.55,road:rng2()>.45});
+      var selev=getElev(grid[sr][sc].id);
+      var isoPos=isoProject(hctr.x,hctr.y,selev,HexR);
+      settlements.push({col:sc,row:sr,px:hctr.x,py:hctr.y,isoX:isoPos.x,isoY:isoPos.y,name:snm,isCity:rng2()>.55,road:rng2()>.45});
       break;
     }
   }
