@@ -102,10 +102,17 @@ select:focus{border-color:var(--gold);}select option{background:#181e2a;}
 .lore-btn{width:100%;padding:8px;background:linear-gradient(180deg,#2a1a40,#1a1030);color:#c090e0;border:1px solid #4a2a70;border-radius:4px;font-family:'Cinzel',serif;font-size:.75rem;font-weight:600;letter-spacing:.08em;cursor:pointer;text-transform:uppercase;transition:all .15s;}
 .lore-btn:hover{background:linear-gradient(180deg,#3a2a50,#2a1a40);}
 .lore-btn:disabled{opacity:.4;cursor:not-allowed;}
-.lore-panel{background:var(--p2);border:1px solid var(--brd);border-radius:4px;padding:8px 9px;font-size:.67rem;line-height:1.65;color:var(--tx);display:none;max-height:220px;overflow-y:auto;scrollbar-width:thin;}
-.lore-panel h4{font-family:'Cinzel',serif;font-size:.65rem;color:#c090e0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;margin-top:8px;}
-.lore-panel h4:first-child{margin-top:0;}
-.lore-panel p{color:var(--soft);margin-bottom:4px;}
+/* Lore overlay - floating panel on the map */
+#loreOverlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:300;background:rgba(4,8,16,.75);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;pointer-events:auto;}
+#loreOverlayInner{background:var(--panel);border:1px solid rgba(192,144,224,.5);border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.9);width:min(540px,90%);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;}
+#loreOverlayHeader{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;background:rgba(192,144,224,.07);border-bottom:1px solid var(--brd);flex-shrink:0;}
+#loreOverlayTitle{font-family:'Cinzel',serif;font-size:.8rem;font-weight:600;color:#c090e0;letter-spacing:.12em;text-transform:uppercase;}
+#loreOverlayClose{background:none;border:none;color:var(--soft);cursor:pointer;font-size:1rem;padding:0 2px;line-height:1;}
+#loreOverlayClose:hover{color:#c090e0;}
+.lore-panel-inner{overflow-y:auto;padding:16px 18px 18px;flex:1;scrollbar-width:thin;scrollbar-color:var(--brd) var(--panel);}
+.lore-panel-inner h4{font-family:'Cinzel',serif;font-size:.72rem;color:#c090e0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;margin-top:14px;}
+.lore-panel-inner h4:first-child{margin-top:0;}
+.lore-panel-inner p{color:var(--tx);font-size:.8rem;line-height:1.7;margin-bottom:6px;}
 .lore-loading{display:flex;align-items:center;gap:6px;font-size:.65rem;color:var(--mut);padding:6px 0;}
 .lore-spinner{width:12px;height:12px;border:2px solid var(--brd);border-top-color:#c090e0;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -203,7 +210,6 @@ select:focus{border-color:var(--gold);}select option{background:#181e2a;}
     <button class="unb" id="undoBtn" disabled>↩ Undo</button>
   </div>
   <button class="lore-btn" id="loreBtn" disabled>✦ Chronicle This Realm</button>
-  <div id="lorePanel" class="lore-panel"></div>
   <button class="export-btn" id="exportBtn" disabled>🖼 Export Decorated Map</button>
   <hr class="dv"/>
   <div class="sh">Legend</div>
@@ -269,6 +275,15 @@ select:focus{border-color:var(--gold);}select option{background:#181e2a;}
   <div id="minimap-viewport"></div>
   <canvas id="rc"></canvas>
   <div class="region-mode-hint" id="regionHint">🗺 Region Paint — drag to paint · click region to name · Esc to exit</div>
+  <div id="loreOverlay">
+    <div id="loreOverlayInner">
+      <div id="loreOverlayHeader">
+        <span id="loreOverlayTitle">Chronicle</span>
+        <button id="loreOverlayClose">✕</button>
+      </div>
+      <div id="lorePanel" class="lore-panel-inner"></div>
+    </div>
+  </div>
   <div class="progress" id="pgBar"><div class="progress-bar" id="pgFill"></div></div>
 </div>
 </div>
@@ -672,8 +687,18 @@ mapArea.addEventListener('touchmove',function(e){if(e.touches.length===1){ox=tox
 document.getElementById('zIn').onclick=function(){zoom=clamp(+(zoom+.2).toFixed(2),.2,4);applyZoom();};
 document.getElementById('zOut').onclick=function(){zoom=clamp(+(zoom-.2).toFixed(2),.2,4);applyZoom();};
 document.getElementById('zRst').onclick=function(){zoom=1;centerMap();};
-function applyZoom(){canvas.style.transform='scale('+zoom+')';canvas.style.transformOrigin='top left';ac.style.transform=canvas.style.transform;ac.style.transformOrigin='top left';document.getElementById('zLbl').textContent=Math.round(zoom*100)+'%';}
-function applyTransform(){canvas.style.left=ox+'px';canvas.style.top=oy+'px';ac.style.left=ox+'px';ac.style.top=oy+'px';}
+function applyZoom(){
+  var s='scale('+zoom+')';
+  canvas.style.transform=s;canvas.style.transformOrigin='top left';
+  ac.style.transform=s;ac.style.transformOrigin='top left';
+  var rc=document.getElementById('rc');rc.style.transform=s;rc.style.transformOrigin='top left';
+  document.getElementById('zLbl').textContent=Math.round(zoom*100)+'%';
+}
+function applyTransform(){
+  canvas.style.left=ox+'px';canvas.style.top=oy+'px';
+  ac.style.left=ox+'px';ac.style.top=oy+'px';
+  var rc=document.getElementById('rc');rc.style.left=ox+'px';rc.style.top=oy+'px';
+}
 function centerMap(){var ar=mapArea.getBoundingClientRect();ox=Math.max(0,(ar.width-canvas.width*zoom)/2);oy=Math.max(0,(ar.height-canvas.height*zoom)/2);applyTransform();applyZoom();}
 
 // ── Tooltip ────────────────────────────────────────────────────────────────────
@@ -1210,6 +1235,13 @@ document.addEventListener('keydown',function(e){
 
 // ── Lore Generation ────────────────────────────────────────────────────────
 document.getElementById('loreBtn').addEventListener('click',generateLore);
+document.getElementById('loreOverlayClose').addEventListener('click',function(){
+  document.getElementById('loreOverlay').style.display='none';
+});
+// Also close on backdrop click
+document.getElementById('loreOverlay').addEventListener('click',function(e){
+  if(e.target===this)this.style.display='none';
+});
 
 function buildMapSummary(){
   var counts={};
@@ -1235,8 +1267,11 @@ async function generateLore(){
   var btn=document.getElementById('loreBtn');
   var panel=document.getElementById('lorePanel');
   btn.disabled=true;btn.textContent='✦ Chronicling…';
-  panel.style.display='block';
+  var overlay=document.getElementById('loreOverlay');
+  overlay.style.display='flex';
   panel.innerHTML='<div class="lore-loading"><div class="lore-spinner"></div>The chronicler writes…</div>';
+  var mapTitle=document.getElementById('mapTitleTxt').textContent;
+  document.getElementById('loreOverlayTitle').textContent=mapTitle||'Chronicle';
   var summary=buildMapSummary();
   var prompt=`You are a fantasy world chronicler. Based on this map data, write rich, evocative world lore in 4 short sections. Use the EXACT realm name and location names provided.
 
@@ -1447,12 +1482,10 @@ generate=function(){
   // Size region canvas to match map canvas
   var rc=document.getElementById('rc');
   rc.width=canvas.width;rc.height=canvas.height;
-  rc.style.left=canvas.style.left;rc.style.top=canvas.style.top;
-  rc.style.transform=canvas.style.transform;rc.style.transformOrigin='top left';
   regions=[];drawRegions();
   document.getElementById('loreBtn').disabled=false;
   document.getElementById('exportBtn').disabled=false;
-  document.getElementById('lorePanel').style.display='none';
+  document.getElementById('loreOverlay').style.display='none';
 };
 
 </script>
