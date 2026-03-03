@@ -420,183 +420,165 @@ function getElev(id) {
   return (ELEV[id] !== undefined ? ELEV[id] : 2.5);
 }
 
-// ── Pass 1: Top-face pixel textures ─────────────────────────────────────────
-// For each pixel, unproject from iso-squished screen space back to flat hex space,
-// find which hex it belongs to, and sample that hex's texture.
-function renderPixels(imgData, W, H, hexMap, grid, COLS, ROWS, R, n1fn, n2fn) {
-  var data = imgData.data;
-  var ns = 0.055, LX = -0.55, LY = -0.75;
-  // Fill void
-  for (var i=0;i<W*H*4;i+=4){data[i]=4;data[i+1]=8;data[i+2]=18;data[i+3]=255;}
+// ── Full GPU-accelerated ISO 3D Renderer ──────────────────────────────────────
+// All drawing uses canvas 2D vector paths — no per-pixel loops.
+// Each hex is drawn as: bottom fill → side walls (3 faces) → top face
+// Sorted back-to-front so closer tiles paint over farther ones.
 
-  // Pre-compute per-hex elevation
-  var elevMap = new Float32Array(COLS*ROWS);
-  for (var row=0;row<ROWS;row++) for (var col=0;col<COLS;col++){
-    var t=grid[row][col]; elevMap[row*COLS+col]=t?getElev(t.id):0;
-  }
+function getElev(id){return ELEV[id]!==undefined?ELEV[id]:2.5;}
 
-  for (var py=0; py<H; py++) {
-    for (var px=0; px<W; px++) {
-      // Invert the iso Y squish: flat_y = screen_y / 0.55
-      // But each hex has an elev offset — we find the hex by the flat lookup (elev=0 base)
-      var flatY = py / 0.55;
-      var flatX = px;
+// Solid fill color for each terrain (used for top face base)
+var TCOLOR={
+  DEEP_OCEAN:'#0d2040',OCEAN:'#16366a',COAST:'#1e5580',SHALLOW:'#2a6e9a',
+  RIVER:'#1a4e8e',LAKE:'#102c5c',
+  PLAINS:'#5a7020',GRASSLAND:'#2a5c14',FOREST:'#1a4010',JUNGLE:'#0e3808',
+  HILLS:'#5a4418',DESERT:'#9a7820',SAVANNA:'#7a5c14',
+  TUNDRA:'#506058',SNOW:'#8090a0',SNOW_PEAK:'#a8bcc8',
+  MOUNTAINS:'#484038',VOLCANIC:'#321008',LAVA:'#8a1404',
+  SWAMP:'#1e3010',RUINS:'#2c1c14',CASTLE:'#1c1c2c',
+};
 
-      // Hex lookup on flat coords
-      var pi2=~~flatX, pj2=~~flatY;
-      if (pi2<0||pi2>=W||pj2<0||pj2>=hexMap.length/W) continue;
-      var luIdx = hexMap[pj2*W+pi2];
-      if (luIdx<0) continue;
+// Lighter highlight variant for top face
+var TLIGHT={
+  DEEP_OCEAN:'#1a3a5a',OCEAN:'#2050a0',COAST:'#2a70b0',SHALLOW:'#3a90c8',
+  RIVER:'#2468b8',LAKE:'#183868',
+  PLAINS:'#8aa030',GRASSLAND:'#3a8020',FOREST:'#286018',JUNGLE:'#165210',
+  HILLS:'#7a6028',DESERT:'#c8a030',SAVANNA:'#9a7820',
+  TUNDRA:'#7090808',SNOW:'#b0c4d0',SNOW_PEAK:'#d0e4f0',
+  MOUNTAINS:'#6a6058',VOLCANIC:'#501808',LAVA:'#c02008',
+  SWAMP:'#2e4818',RUINS:'#483828',CASTLE:'#2c2c44',
+};
 
-      var col2=luIdx%COLS, row2=~~(luIdx/COLS);
-      var tile=grid[row2][col2]; if(!tile) continue;
-      var elev2=elevMap[row2*COLS+col2];
+// Side wall shadow factors per face (right, bot-right, bot-left)
+var SIDE_F=[0.48,0.36,0.26];
 
-      // The top face of this tile in screen space has y = flat_y*0.55 - elev*ELEV_SCALE
-      // So for a pixel at screen py, the "effective" flat y on this tile's surface is:
-      // py = (flatY_surface)*0.55 - elev*ELEV_SCALE
-      // flatY_surface = (py + elev*ELEV_SCALE) / 0.55
-      var surfFlatY = (py + elev2 * ELEV_SCALE) / 0.55;
-
-      // If surfFlatY is way out of range for this hex, this pixel is actually
-      // a side wall (skip here, drawn by Pass 2)
-      var c2 = hexCtr(col2, row2, R);
-      var flatHy = (surfFlatY - c2.y) / R;
-      if (flatHy > 1.2) continue; // below tile base = side wall territory
-
-      var flatHx = (flatX - c2.x) / R;
-      var def2 = T[tile.id] || T.GRASSLAND;
-      var n2 = n1fn(px*ns, py*ns), m2 = n2fn(px*ns*2.3+17.3, py*ns*2.3+5.1);
-      var rgb2 = def2.px(px, py, n2, m2, flatHx, flatHy);
-      var r2=rgb2[0],g2=rgb2[1],b2=rgb2[2];
-
-      // Isometric directional lighting
-      var shade2 = clamp((flatHx*LX + flatHy*LY)*0.5+0.5, 0.28, 1.0);
-      var elevBoost = clamp(elev2/10, 0, 0.22);
-      var light2 = 0.70 + shade2*0.30 + elevBoost;
-      r2=clamp(~~(r2*light2),0,255); g2=clamp(~~(g2*light2),0,255); b2=clamp(~~(b2*light2),0,255);
-
-      // Edge softening
-      var ed2 = hexEdgeDist(flatHx, flatHy, R);
-      if (ed2 < 3.5) {
-        var bt2 = clamp(1-ed2/3.5,0,1)*0.26;
-        var nx3=clamp(~~(px+(flatHx>0?3:-3)),0,W-1), ny3=clamp(~~(py+(flatHy>0?3:-3)),0,H-1);
-        var nidx3 = hexMap[ny3*W+nx3];
-        if (nidx3>=0 && nidx3!==luIdx) {
-          var nc3=nidx3%COLS, nr3=~~(nidx3/COLS);
-          var nt3=grid[nr3][nc3];
-          if (nt3) {
-            var nd3=T[nt3.id]||T.GRASSLAND;
-            var nc3c=hexCtr(nc3,nr3,R);
-            var nhx3=(flatX-nc3c.x)/R, nhy3=(flatY-nc3c.y)/R;
-            var nrgb3=nd3.px(px,py,n2,m2,nhx3,nhy3);
-            r2=~~lerp(r2,nrgb3[0],bt2); g2=~~lerp(g2,nrgb3[1],bt2); b2=~~lerp(b2,nrgb3[2],bt2);
-          }
-        }
-      }
-
-      var i3=(py*W+px)*4; data[i3]=r2;data[i3+1]=g2;data[i3+2]=b2;data[i3+3]=255;
-    }
-  }
+function hexPath(ctx2,verts){
+  ctx2.beginPath();ctx2.moveTo(verts[0][0],verts[0][1]);
+  for(var k=1;k<6;k++)ctx2.lineTo(verts[k][0],verts[k][1]);
+  ctx2.closePath();
 }
 
-// ── Pass 2: Vector side walls ────────────────────────────────────────────────
-// Draw extruded hex walls as canvas vector paths — fast, beautiful, sorted back-to-front
-function drawIsoSideWalls(ctx2, grid, COLS, ROWS, R) {
-  // Sort back-to-front (painter's algorithm): larger row+col renders last (closest)
+function renderPixels(imgData,W,H,hexMap,grid,COLS,ROWS,R,n1fn,n2fn){
+  // No-op: all rendering is now done via canvas vector in rerenderAll
+  // Fill void colour so background isn't white during first frame
+  var data=imgData.data;
+  for(var i=0;i<data.length;i+=4){data[i]=4;data[i+1]=8;data[i+2]=18;data[i+3]=255;}
+}
+
+function renderIso(ctx2,grid,COLS,ROWS,R,noiseH,noiseD){
+  // Build back-to-front order
   var order=[];
-  for(var row=0;row<ROWS;row++) for(var col=0;col<COLS;col++) order.push([col,row]);
+  for(var row=0;row<ROWS;row++)for(var col=0;col<COLS;col++)order.push(row*COLS+col);
+  // Sort: row ascending, col ascending (top-left to bottom-right in iso view)
   order.sort(function(a,b){
-    var sa=a[1]*1000+a[0], sb=b[1]*1000+b[0]; return sa-sb;
+    var ar=~~(a/COLS),ac=a%COLS,br=~~(b/COLS),bc=b%COLS;
+    return (ar+ac*0.001)-(br+bc*0.001);
   });
 
-  order.forEach(function(cr){
-    var col=cr[0],row=cr[1];
-    var tile=grid[row][col]; if(!tile) return;
-    var elev=getElev(tile.id);
-    if(elev<1.3) return; // water — no walls
+  var ns=0.055;
 
+  order.forEach(function(idx){
+    var col=idx%COLS,row=~~(idx/COLS);
+    var tile=grid[row][col];if(!tile)return;
+    var id=tile.id;
+    var elev=getElev(id);
     var topV=isoHexTopVerts(col,row,R,elev);
     var botV=isoHexTopVerts(col,row,R,0);
 
-    var def=T[tile.id]||T.GRASSLAND;
-    var n=0.5,m=0.5; // neutral color for walls
     var c=hexCtr(col,row,R);
-    var baseRgb=def.px(c.x,c.y,n,m,0,0);
-    var br=baseRgb[0],bg=baseRgb[1],bb=baseRgb[2];
+    var cx=c.x,cy=c.y;
 
-    // Draw 3 visible sides: right (edge 0-1), bot-right (1-2), bot-left (2-3)
-    var sides=[
-      {e0:0,e1:1,f:0.50}, // right face — medium
-      {e0:1,e2:2,f:0.40}, // bot-right — darker
-      {e0:2,e3:3,f:0.32}, // bot-left — darkest
-    ];
-    // Actually use correct hex edge indices for a flat-top hex in iso view
-    // Visible bottom edges are 2,3,4 (bottom half of hex)
-    var visibleSides=[
-      {e0:1,e1:2,f:0.52}, // right
-      {e0:2,e1:3,f:0.40}, // bot-right
-      {e0:3,e1:4,f:0.30}, // bot-left
-    ];
+    // Sample noise for texture variation
+    var n=noiseH?noiseH(cx*ns,cy*ns):0.5;
+    var m=noiseD?noiseD(cx*ns*2.3+17.3,cy*ns*2.3+5.1):0.5;
+    var vary=0.82+n*0.28+m*0.1;
 
-    visibleSides.forEach(function(s){
-      var t0=topV[s.e0],t1=topV[s.e1];
-      var b0=botV[s.e0],b1=botV[s.e1];
-      var f=s.f;
-      var wr=clamp(~~(br*f),0,255),wg=clamp(~~(bg*f),0,255),wb=clamp(~~(bb*f),0,255);
-      // Gradient from slightly lighter at top to darker at bottom
-      var grad=ctx2.createLinearGradient(t0[0],t0[1],b0[0],b0[1]);
-      var topF=Math.min(1,f*1.35);
-      grad.addColorStop(0,'rgba('+clamp(~~(br*topF),0,255)+','+clamp(~~(bg*topF),0,255)+','+clamp(~~(bb*topF),0,255)+',.97)');
-      grad.addColorStop(1,'rgba('+wr+','+wg+','+wb+',.97)');
-      ctx2.fillStyle=grad;
-      ctx2.beginPath();
-      ctx2.moveTo(t0[0],t0[1]);
-      ctx2.lineTo(t1[0],t1[1]);
-      ctx2.lineTo(b1[0],b1[1]);
-      ctx2.lineTo(b0[0],b0[1]);
-      ctx2.closePath();
-      ctx2.fill();
-      // Subtle edge highlight at wall top
-      ctx2.strokeStyle='rgba(255,255,255,0.10)';
-      ctx2.lineWidth=0.8;
-      ctx2.beginPath();ctx2.moveTo(t0[0],t0[1]);ctx2.lineTo(t1[0],t1[1]);ctx2.stroke();
-    });
+    // ── Side walls (only for elevated tiles) ────────────────────────────────
+    if(elev>1.2){
+      // Visible edges: 1-2 (right), 2-3 (bottom-right), 3-4 (bottom-left)
+      var sideEdges=[[1,2,0],[2,3,1],[3,4,2]];
+      sideEdges.forEach(function(se){
+        var t0=topV[se[0]],t1=topV[se[1]];
+        var b0=botV[se[0]],b1=botV[se[1]];
+        var f=SIDE_F[se[2]]*vary;
+        var def=T[id]||T.PLAINS;
+        var baseRgb=def.px(cx,cy,n,m,0.2,0.2);
+        var wr=clamp(~~(baseRgb[0]*f),0,255);
+        var wg=clamp(~~(baseRgb[1]*f),0,255);
+        var wb=clamp(~~(baseRgb[2]*f),0,255);
+        var tf=Math.min(1,f*1.4);
+        var tr2=clamp(~~(baseRgb[0]*tf),0,255);
+        var tg2=clamp(~~(baseRgb[1]*tf),0,255);
+        var tb2=clamp(~~(baseRgb[2]*tf),0,255);
+        var grad=ctx2.createLinearGradient(t0[0],t0[1],b0[0],b0[1]);
+        grad.addColorStop(0,'rgba('+tr2+','+tg2+','+tb2+',.96)');
+        grad.addColorStop(1,'rgba('+wr+','+wg+','+wb+',.96)');
+        ctx2.fillStyle=grad;
+        ctx2.beginPath();ctx2.moveTo(t0[0],t0[1]);ctx2.lineTo(t1[0],t1[1]);
+        ctx2.lineTo(b1[0],b1[1]);ctx2.lineTo(b0[0],b0[1]);ctx2.closePath();ctx2.fill();
+        // Wall top edge highlight
+        ctx2.strokeStyle='rgba(255,255,255,0.08)';ctx2.lineWidth=0.7;
+        ctx2.beginPath();ctx2.moveTo(t0[0],t0[1]);ctx2.lineTo(t1[0],t1[1]);ctx2.stroke();
+      });
+    }
+
+    // ── Top face ─────────────────────────────────────────────────────────────
+    // Use pixel-based texture by sampling the terrain px() function at a grid
+    // of points across the hex, then filling with a solid+gradient approach
+    var def2=T[id]||T.PLAINS;
+    // Sample the terrain color at center and 3 offsets for gradient
+    var rgb0=def2.px(cx,cy,n,m,0,0);
+    var rgb1=def2.px(cx-R*.3,cy-R*.3,n*0.9,m*1.1,-0.3,-0.3);
+    var rgb2b=def2.px(cx+R*.3,cy+R*.2,n*1.1,m*0.9,0.3,0.2);
+
+    // Directional light: top-left is brightest
+    var lightBoost=clamp(elev/10,0,0.22);
+
+    // Build a multi-stop gradient across the top face
+    var ic0=isoProject(cx-R*.5,cy-R*.5,elev,R);
+    var ic1=isoProject(cx+R*.5,cy+R*.3,elev,R);
+    var grad2=ctx2.createLinearGradient(ic0.x,ic0.y,ic1.x,ic1.y);
+
+    var mkCol=function(rgb,f){
+      var r2=clamp(~~(rgb[0]*(f+lightBoost)),0,255);
+      var g2=clamp(~~(rgb[1]*(f+lightBoost)),0,255);
+      var b2=clamp(~~(rgb[2]*(f+lightBoost)),0,255);
+      return 'rgb('+r2+','+g2+','+b2+')';
+    };
+    grad2.addColorStop(0, mkCol(rgb1,1.12));
+    grad2.addColorStop(0.5,mkCol(rgb0,1.0));
+    grad2.addColorStop(1, mkCol(rgb2b,0.82));
+
+    hexPath(ctx2,topV);
+    ctx2.fillStyle=grad2;
+    ctx2.fill();
+
+    // Noise stipple: add a subtle texture pass using tiny rects
+    // Sample 6 random sub-points per tile for variation
+    ctx2.save();
+    hexPath(ctx2,topV);ctx2.clip();
+    for(var si=0;si<6;si++){
+      var px2=cx+(Math.sin(si*1.9)*0.7)*R;
+      var py2=cy+(Math.cos(si*2.3)*0.55)*R;
+      var rr2=n1fn?n1fn(px2*ns*1.3+si,py2*ns*1.3+si):0.5;
+      var stippleRgb=def2.px(px2,py2,rr2,1-rr2,Math.sin(si)*0.6,Math.cos(si)*0.6);
+      var sp=isoProject(px2,py2,elev,R);
+      var sa=(rr2-0.5)*0.18;
+      if(sa>0){
+        ctx2.fillStyle='rgba('+stippleRgb[0]+','+stippleRgb[1]+','+stippleRgb[2]+','+sa+')';
+        ctx2.fillRect(sp.x-2,sp.y-2,4,3);
+      }
+    }
+    ctx2.restore();
+
+    // Top-face edge outline (subtle)
+    hexPath(ctx2,topV);
+    ctx2.strokeStyle='rgba(255,255,240,0.10)';
+    ctx2.lineWidth=0.6;
+    ctx2.stroke();
   });
 }
 
-// Point-in-quad test (convex quad a,b,c,d in CCW order)
-function ptInQuad(px,py,a,b,c,d){
-  function side(p1,p2){return (px-p1[0])*(p2[1]-p1[1])-(py-p1[1])*(p2[0]-p1[0]);}
-  var s1=side(a,b),s2=side(b,c),s3=side(c,d),s4=side(d,a);
-  return (s1>=0&&s2>=0&&s3>=0&&s4>=0)||(s1<=0&&s2<=0&&s3<=0&&s4<=0);
-}
-
-// Get normalized V position (0=top, 1=bottom) within quad
-function getQuadV(px,py,t0,t1,b0,b1){
-  var topY=(t0[1]+t1[1])/2, botY=(b0[1]+b1[1])/2;
-  if(botY===topY)return 0;
-  return clamp((py-topY)/(botY-topY),0,1);
-}
-
-// ── ISO-aware Canvas size calculator ─────────────────────────────────────────
-// The iso projection squishes Y by 0.55, so canvas height = grid_height * 0.55 + elev headroom
-function isoCanvasSize(COLS, ROWS, R) {
-  var flatW = Math.ceil(R*1.5*COLS + R*2.5);
-  var flatH = Math.ceil(R*SQ3*ROWS + R*SQ3);
-  var isoH = Math.ceil(flatH * 0.55 + 10 * ELEV_SCALE + R*2); // headroom for tallest tiles
-  return { W: flatW, H: isoH, flatH: flatH };
-}
-
-// ── ISO Decals ────────────────────────────────────────────────────────────────
-// All decals are drawn on the iso-projected top face center, lifted by elevation
-
-function getIsoCenter(col, row, R) {
-  var c = hexCtr(col, row, R);
-  var elev = 0; // will be passed in
-  var p = isoProject(c.x, c.y, elev, R);
-  return p;
-}
 
 function drawAllDecals(ctx2, grid, COLS, ROWS, R, settlements) {
   // Sort back-to-front: higher row first, then col
@@ -1045,12 +1027,7 @@ function rerenderAll(){
   if(!grid.length||!noiseH)return;
   var W=canvas.width,H=canvas.height;
   ctx.fillStyle='#040810';ctx.fillRect(0,0,W,H);
-  // Pass 1: pixel-level top-face textures
-  var imgData=ctx.createImageData(W,H);
-  renderPixels(imgData,W,H,hexLookup,grid,COLS,ROWS,HexR,noiseH,noiseD);
-  ctx.putImageData(imgData,0,0);
-  // Pass 2: vector side walls drawn on top (fast canvas paths)
-  drawIsoSideWalls(ctx,grid,COLS,ROWS,HexR);
+  renderIso(ctx,grid,COLS,ROWS,HexR,noiseH,noiseD);
   baseImg=ctx.getImageData(0,0,W,H);
   drawAllDecals(ctx,grid,COLS,ROWS,HexR,settlements);
 }
